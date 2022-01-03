@@ -14,27 +14,17 @@ int main() {
         Div("field1")
             .klass("field") // the class attribute is used by many css libs for styling elements of the same class
             .append(Label("email").klass("label").text("Email"))
-            .append(
-                Div("control1").klass("control").append(
-                    Input("input1")
-                        .klass("input")
-                        .type("email")
-                        .attr("placeholder", "m@gmail.com")
-                )
-            )
-            .append(
-                Div("field2")
-                    .klass("field")
-                    .append(Label("pass").klass("label").text("Password"))
-                    .append(
-                        Div("control2").klass("control").append(
-                            Input("input2")
-                                .klass("input")
-                                .type("password")
-                                .attr("placeholder", "*******")
-                        )
-                    )
-            )
-            .append(Button("button").klass("button is-primary").text("Sign in"))
-    );
+            .append(Div("control1")
+                        .klass("control")
+                        .append(Input("input1").klass("input").type("email").attr("placeholder", "m@gmail.com")))
+            .append(Div("field2")
+                        .klass("field")
+                        .append(Label("pass").klass("label").text("Password"))
+                        .append(Div("control2")
+                                    .klass("control")
+                                    .append(Input("input2")
+                                                .klass("input")
+                                                .type("password")
+                                                .attr("placeholder", "*******"))))
+            .append(Button("button").klass("button is-primary").text("Sign in")));
 }
