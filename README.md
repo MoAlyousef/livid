@@ -142,7 +142,7 @@ $ python3 -m http.server --directory .
 ```
 Or you can use `emrun` which is provided by emscripten.
 
-emrun opens a browser automatically, if you use another server program, you need to open your wasm-capable browser on the url provided, which is usually something like 127.0.0.1:8000
+emrun opens a browser automatically, if you use another server program, you need to open your wasm-capable browser to the provided url, which is usually something like 127.0.0.1:8000
 
 ## Html shell
 
