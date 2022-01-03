@@ -1,5 +1,5 @@
-#ifndef __HEADER_HPP__
-#define __HEADER_HPP__
+#ifndef __LIVID_HPP__
+#define __LIVID_HPP__
 
 #include <cstdio>
 #include <emscripten.h>
