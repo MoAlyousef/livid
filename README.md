@@ -11,48 +11,45 @@ The code looks something like this:
 
 using namespace livid;
 
-using namespace livid;
-
 class AppState {
-    int counter;
+    static int counter;
     public:
-     AppState(int c): counter(c) {}
-    void increment() {
+    static void increment() {
         counter += 1;
+        auto result = Widget<WidgetType::Div>::from_id("result");
+        result.text(std::to_string(counter));
     }
-    void decrement() {
+    static void decrement() {
         counter -= 1;
-    }
-    int value() const {
-        return counter;
+        auto result = Widget<WidgetType::Div>::from_id("result");
+        result.text(std::to_string(counter));
     }
 };
 
-static AppState state(0);
+int AppState::counter = 0;
 
-WASM_EXPORT void inc(void) { // these are extern "C" functions
-    auto result = Widget<WidgetType::Div>::from_id("result");
-    state.increment();
-    result.text(std::to_string(state.value()).c_str());
+WASM_EXPORT void inc(void) {
+    AppState::increment();
 }
 
 WASM_EXPORT void dec(void) {
-    auto result = Widget<WidgetType::Div>::from_id("result");
-    state.decrement();
-    result.text(std::to_string(state.value()).c_str());
+    AppState::decrement();
 }
 
 int main() {
-    Widget<WidgetType::Div> div("mydiv"); // The constructor takes an id, which needs to be unique
+    Widget<WidgetType::Div> div("mydiv"); // The constructor takes an id, which needs to be unique and without spaces
+
     Widget<WidgetType::Button> btn1("btn_inc");
-    Widget<WidgetType::Button> btn2("btn_dec");
-    Widget<WidgetType::Div> result("result");
-    div.append(btn1); // widgets are automatically appended to body, here we want to append to the div
-    div.append(btn2);
     btn1.text("Increment!"); // This sets the textContent element property
     btn1.handle("click", "inc"); // This signals that clicks call the inc function
+    div.append(btn1); // widgets are automatically appended to body, here we want to append to the div
+
+    Widget<WidgetType::Button> btn2("btn_dec");
     btn2.text("Decrement!");
     btn2.handle("click", "dec");
+    div.append(btn2);
+
+    Widget<WidgetType::Div> result("result");
     result.text("0");
 }
 ```
@@ -72,7 +69,7 @@ using Button = Widget<WidgetType::Button>;
 int main() {
     Form("box").klass("box").append(
         Div("field1")
-            .klass("field") // the attribute class is used by many css libs for styling elements of the same class
+            .klass("field") // the class attribute is used by many css libs for styling elements of the same class
             .append(Label("email").klass("label").text("Email"))
             .append(
                 Div("control1").klass("control").append(
@@ -108,7 +105,7 @@ Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
 ```
-$ em++ -std=c++17 -I. examples/counter.cpp -s EXTRA_EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8'] -o index.html --shell-file my_shell.html
+$ em++ -std=c++17 -Iinclude examples/counter.cpp -s EXTRA_EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8'] -o index.html --shell-file my_shell.html
 ```
 
 With CMake:

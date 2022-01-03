@@ -6,5 +6,5 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --shell-file ${CMAKE_CURRE
 
 add_executable(index login.cpp)
 target_compile_features(index PRIVATE cxx_std_17)
-target_include_directories(index PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)
+target_include_directories(index PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
 set_target_properties(index PROPERTIES SUFFIX .html)

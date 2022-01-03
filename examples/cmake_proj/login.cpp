@@ -12,7 +12,7 @@ using Button = Widget<WidgetType::Button>;
 int main() {
     Form("box").klass("box").append(
         Div("field1")
-            .klass("field")
+            .klass("field") // the class attribute is used by many css libs for styling elements of the same class
             .append(Label("email").klass("label").text("Email"))
             .append(
                 Div("control1").klass("control").append(

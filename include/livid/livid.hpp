@@ -380,6 +380,13 @@ class Widget {
             element, id_.c_str());
     }
 
+    Widget(const Widget &other): id_(other.id_) {}
+    Widget(Widget &&other): id_(std::move(other.id_)) {}
+    Widget& operator=(const Widget &other) {
+        *this = other;
+        return *this;
+    }
+
     static Widget from_id(const std::string &id) {
         Widget w;
         w.id_ = id;

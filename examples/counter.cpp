@@ -4,46 +4,43 @@
 using namespace livid;
 
 class AppState {
-    int counter;
+    static int counter;
     public:
-     AppState(int c): counter(c) {}
-    void increment() {
+    static void increment() {
         counter += 1;
+        auto result = Widget<WidgetType::Div>::from_id("result");
+        result.text(std::to_string(counter));
     }
-    void decrement() {
+    static void decrement() {
         counter -= 1;
-    }
-    int value() const {
-        return counter;
+        auto result = Widget<WidgetType::Div>::from_id("result");
+        result.text(std::to_string(counter));
     }
 };
 
-static AppState state(0);
+int AppState::counter = 0;
 
 WASM_EXPORT void inc(void) {
-    auto result = Widget<WidgetType::Div>::from_id("result");
-    state.increment();
-    result.text(std::to_string(state.value()).c_str());
+    AppState::increment();
 }
 
 WASM_EXPORT void dec(void) {
-    auto result = Widget<WidgetType::Div>::from_id("result");
-    state.decrement();
-    result.text(std::to_string(state.value()).c_str());
+    AppState::decrement();
 }
 
 int main() {
-    Widget<WidgetType::Div> div("mydiv");
+    Widget<WidgetType::Div> div("mydiv"); // The constructor takes an id, which needs to be unique and without spaces
+
     Widget<WidgetType::Button> btn1("btn_inc");
-    btn1.text("Increment!");
-    btn1.handle("click", "inc");
+    btn1.text("Increment!"); // This sets the textContent element property
+    btn1.handle("click", "inc"); // This signals that clicks call the inc function
+    div.append(btn1); // widgets are automatically appended to body, here we want to append to the div
+
     Widget<WidgetType::Button> btn2("btn_dec");
     btn2.text("Decrement!");
     btn2.handle("click", "dec");
-    Widget<WidgetType::Div> result("result");
-
-    div.append(btn1);
     div.append(btn2);
 
+    Widget<WidgetType::Div> result("result");
     result.text("0");
 }
