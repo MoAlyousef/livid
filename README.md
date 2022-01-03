@@ -133,11 +133,17 @@ target_link_options(index PRIVATE --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shel
 target_link_libraries(index PRIVATE livid::livid)
 ```
 Then configure with `emcmake cmake -Bbin`, and build with `cmake --build bin`.
-To run, you can't just open the generate html file in a browser, you need a server to serve things:
+
+## Running
+
+Opening the html file directly in the browser won't work.
+To run, you need a server to serve the generated html file:
 ```
 $ python3 -m http.server --directory .
 ```
 Or you can use `emrun` which is provided by emscripten.
+
+emrun opens a browser automatically, if you use another server program, you need to open your wasm-capable browser on the url provided, which is usually something like 127.0.0.1:8000
 
 ## Html shell
 
