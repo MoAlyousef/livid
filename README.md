@@ -12,7 +12,7 @@ using namespace livid;
 
 static int COUNT = 0;
 
-WASM_EXPORT void inc(void) {
+WASM_EXPORT void inc(void) { // these are extern "C" functions
     auto result = Widget<WidgetType::Div>::from_id("result");
     COUNT += 1;
     result.text(std::to_string(COUNT).c_str());
