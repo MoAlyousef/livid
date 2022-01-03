@@ -3,7 +3,6 @@
 
 #include <cstdio>
 #include <emscripten.h>
-#include <emscripten/html5.h>
 #include <string>
 
 #define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
