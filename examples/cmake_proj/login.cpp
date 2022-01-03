@@ -1,4 +1,3 @@
-#include <emscripten.h>
 #include <string>
 #include "livid/livid.hpp"
 

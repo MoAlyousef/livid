@@ -5,7 +5,6 @@ Livid is a single header C++ wasm frontend library leveraging Emscripten.
 ## Usage
 The code looks something like this:
 ```cpp
-#include <emscripten.h>
 #include <string>
 #include "livid/livid.hpp"
 
