@@ -3,6 +3,7 @@
 Livid is a single header C++ wasm frontend library leveraging Emscripten.
 
 ## Usage
+
 The code looks something like this:
 ```cpp
 #include <string>
@@ -10,18 +11,35 @@ The code looks something like this:
 
 using namespace livid;
 
-static int COUNT = 0;
+using namespace livid;
+
+class AppState {
+    int counter;
+    public:
+     AppState(int c): counter(c) {}
+    void increment() {
+        counter += 1;
+    }
+    void decrement() {
+        counter -= 1;
+    }
+    int value() const {
+        return counter;
+    }
+};
+
+static AppState state(0);
 
 WASM_EXPORT void inc(void) {
     auto result = Widget<WidgetType::Div>::from_id("result");
-    COUNT += 1;
-    result.text(std::to_string(COUNT).c_str());
+    state.increment();
+    result.text(std::to_string(state.value()).c_str());
 }
 
 WASM_EXPORT void dec(void) {
     auto result = Widget<WidgetType::Div>::from_id("result");
-    COUNT -= 1;
-    result.text(std::to_string(COUNT).c_str());
+    state.decrement();
+    result.text(std::to_string(state.value()).c_str());
 }
 
 int main() {
@@ -29,8 +47,8 @@ int main() {
     Widget<WidgetType::Button> btn1("btn_inc");
     Widget<WidgetType::Button> btn2("btn_dec");
     Widget<WidgetType::Div> result("result");
-    div.append_child(btn1); // widgets are automatically appended to body, here we want to append to the div
-    div.append_child(btn2);
+    div.append(btn1); // widgets are automatically appended to body, here we want to append to the div
+    div.append(btn2);
     btn1.text("Increment!"); // This sets the textContent element property
     btn1.handle("click", "inc"); // This signals that clicks call the inc function
     btn2.text("Decrement!");
@@ -38,9 +56,52 @@ int main() {
     result.text("0");
 }
 ```
-You'll also notice that the repo has a minimal shell which you can use, it's passed as an argument to emscripten. You can replace it with whatever shell you prefer, and include css etc. The login example uses Bulma for CSS.
+You can also use a builder pattern:
+```cpp
+#include "livid/livid.hpp"
+#include <string>
+
+using namespace livid;
+
+using Div = Widget<WidgetType::Div>;
+using Form = Widget<WidgetType::Form>;
+using Label = Widget<WidgetType::Label>;
+using Input = Widget<WidgetType::Input>;
+using Button = Widget<WidgetType::Button>;
+
+int main() {
+    Form("box").klass("box").append(
+        Div("field1")
+            .klass("field") // the attribute class is used by many css libs for styling elements of the same class
+            .append(Label("email").klass("label").text("Email"))
+            .append(
+                Div("control1").klass("control").append(
+                    Input("input1")
+                        .klass("input")
+                        .type("email")
+                        .attr("placeholder", "m@gmail.com")
+                )
+            )
+            .append(
+                Div("field2")
+                    .klass("field")
+                    .append(Label("pass").klass("label").text("Password"))
+                    .append(
+                        Div("control2").klass("control").append(
+                            Input("input2")
+                                .klass("input")
+                                .type("password")
+                                .attr("placeholder", "*******")
+                        )
+                    )
+            )
+            .append(Button("button").klass("button is-primary").text("Sign in"))
+    );
+}
+```
 
 ## Building
+
 Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
@@ -62,4 +123,29 @@ target_compile_features(index PRIVATE cxx_std_17)
 target_include_directories(index PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)
 set_target_properties(index PROPERTIES SUFFIX .html)
 ```
-Then configure with `emcmake cmake -Bbin`.
+Then configure with `emcmake cmake -Bbin`, and build with `cmake --build bin`.
+To run, you can't just open the generate html file in a browser, you need a server to serve things:
+```
+$ python3 -m http.server --directory .
+```
+Or you can use `emrun` which is provided by emscripten.
+
+## Html shell
+
+You'll notice that the repo has a minimal shell which you can use, it's passed as an argument to emscripten. You can replace it with whatever shell you prefer, and include css etc. The login example uses Bulma for CSS:
+```html
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <title>My app</title>
+  </head>
+  {{{ SCRIPT }}}
+  </body>
+</html>
+```
+
+## Todo
+- Figure out a way to capture variable in callbacks!

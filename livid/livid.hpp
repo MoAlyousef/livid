@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2021 Mohammed Alyousef
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __LIVID_HPP__
 #define __LIVID_HPP__
 
@@ -339,14 +363,14 @@ constexpr const char *get_element_str(WidgetType typ) {
 }
 } // namespace detail
 
-template <WidgetType type>
+template <WidgetType widget_type>
 class Widget {
     std::string id_ = "";
     Widget() {}
 
   public:
     explicit Widget(const std::string &id) : id_(id) {
-        const char *element = detail::get_element_str(type);
+        const char *element = detail::get_element_str(widget_type);
         EM_ASM_(
             {
                 const widget = document.createElement(Module.UTF8ToString($0));
@@ -366,13 +390,14 @@ class Widget {
         return id_;
     }
 
-    void attr(const std::string &attr, const std::string &val) {
+    Widget &attr(const std::string &attr, const std::string &val) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .setAttribute(Module.UTF8ToString($1), Module.UTF8ToString($2));
             },
             id_.c_str(), attr.c_str(), val.c_str());
+        return *this;
     }
 
     std::string attr(const std::string &attr) {
@@ -389,27 +414,75 @@ class Widget {
         return std::string(ptr);
     }
 
+    Widget &klass(const std::string &val) {
+        EM_ASM_(
+            {
+                document.getElementById(Module.UTF8ToString($0))
+                    .setAttribute('class', Module.UTF8ToString($1));
+            },
+            id_.c_str(), val.c_str());
+        return *this;
+    }
+
+    std::string klass() {
+        char *ptr = nullptr;
+        EM_ASM_(
+            {
+                const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('class');
+                const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                $1 = Module._malloc(cnt);
+                Module.stringToUTF8(txt, $1, cnt);
+            },
+            id_.c_str(), ptr);
+        return std::string(ptr);
+    }
+
+    Widget &type(const std::string &val) {
+        EM_ASM_(
+            {
+                document.getElementById(Module.UTF8ToString($0))
+                    .setAttribute('type', Module.UTF8ToString($1));
+            },
+            id_.c_str(), val.c_str());
+        return *this;
+    }
+
+    std::string type() {
+        char *ptr = nullptr;
+        EM_ASM_(
+            {
+                const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('type');
+                const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                $1 = Module._malloc(cnt);
+                Module.stringToUTF8(txt, $1, cnt);
+            },
+            id_.c_str(), ptr);
+        return std::string(ptr);
+    }
+
     template <WidgetType other>
-    void append_child(const Widget<other> &w) {
+    Widget &append(const Widget<other> &w) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .appendChild(document.getElementById(Module.UTF8ToString($1)));
             },
             id_.c_str(), w.id().c_str());
+        return *this;
     }
 
     template <WidgetType other>
-    void remove_child(const Widget<other> &w) {
+    Widget &remove(const Widget<other> &w) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .removeChild(document.getElementById(Module.UTF8ToString($1)));
             },
             id_.c_str(), w.id().c_str());
+        return *this;
     }
 
-    void handle(const std::string &event, const std::string &name) {
+    Widget &handle(const std::string &event, const std::string &name) {
         std::string n = "_";
         n += name;
         EM_ASM_(
@@ -418,15 +491,17 @@ class Widget {
                     .addEventListener(Module.UTF8ToString($1), Module[Module.UTF8ToString($2)]);
             },
             id_.c_str(), event.c_str(), n.c_str());
+        return *this;
     }
 
-    void text(const std::string &html) {
+    Widget &text(const std::string &html) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0)).textContent =
                     Module.UTF8ToString($1);
             },
             id_.c_str(), html.c_str());
+        return *this;
     }
 
     std::string text() {
@@ -442,13 +517,14 @@ class Widget {
         return std::string(ptr);
     }
 
-    void inner_html(const std::string &html) {
+    Widget &inner_html(const std::string &html) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0)).innerHtml =
                     Module.UTF8ToString($1);
             },
             id_.c_str(), html.c_str());
+        return *this;
     }
 
     std::string inner_html() {
@@ -464,10 +540,11 @@ class Widget {
         return std::string(ptr);
     }
 
-    void href(const std::string &html) {
+    Widget &href(const std::string &html) {
         EM_ASM_(
             { document.getElementById(Module.UTF8ToString($0)).href = Module.UTF8ToString($1); },
             id_.c_str(), html.c_str());
+        return *this;
     }
 
     std::string href() {
