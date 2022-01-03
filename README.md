@@ -128,7 +128,6 @@ FetchContent_MakeAvailable(LIVID)
 add_executable(index main.cpp)
 set_target_properties(index PROPERTIES SUFFIX .html)
 target_compile_features(index PRIVATE cxx_std_17)
-target_compile_options(index PRIVATE "SHELL:-s WASM=1")
 target_link_options(index PRIVATE --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html)
 target_link_libraries(index PRIVATE livid::livid)
 ```
