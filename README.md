@@ -99,6 +99,8 @@ int main() {
     );
 }
 ```
+This uses Bulma for css styling.
+![image](https://user-images.githubusercontent.com/37966791/147970535-12542b64-94e2-4660-86d1-43846d9ce92f.png)
 
 ## Building
 
