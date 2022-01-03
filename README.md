@@ -114,8 +114,9 @@ You need a CMakeLists.txt file with contents similar to:
 cmake_minimum_required(VERSION 3.15)
 project(cmake_livid_example)
 
-include(FetchContent)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 -s EXTRA_EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8']")
 
+include(FetchContent)
 FetchContent_Declare(
     LIVID
     GIT_REPOSITORY https://github.com/MoAlyousef/livid
