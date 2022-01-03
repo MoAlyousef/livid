@@ -30,7 +30,7 @@ class AppState {
 
 static AppState state(0);
 
-WASM_EXPORT void inc(void) {
+WASM_EXPORT void inc(void) { // these are extern "C" functions
     auto result = Widget<WidgetType::Div>::from_id("result");
     state.increment();
     result.text(std::to_string(state.value()).c_str());
