@@ -28,8 +28,16 @@ SOFTWARE.
 #include <emscripten.h>
 #include <string>
 #include <vector>
+#include <functional>
 
 #define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
+
+#define WASM_FUNC(func) (void(&func), #func)
+
+WASM_EXPORT void livid_func_(void *data) {
+    std::function<void()> func = *static_cast<std::function<void()> *>(data);
+    func();
+}
 
 namespace livid {
 
@@ -365,6 +373,7 @@ constexpr const char *get_element_str(WidgetType typ) {
 
 class WidgetBase {
     static size_t val;
+    std::function<void()> *cb_ = nullptr;
   protected:
     std::string id_ = "";
     WidgetBase(const std::string &id) : id_(id) {}
@@ -488,15 +497,19 @@ class WidgetBase {
         return *this;
     }
 
-    WidgetBase &handle(const std::string &event, const std::string &name) {
-        std::string n = "_";
-        n += name;
+    WidgetBase &handle_(const std::string &event, const char *name, void *data) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
-                    .addEventListener(Module.UTF8ToString($1), Module[Module.UTF8ToString($2)]);
+                    .addEventListener(Module.UTF8ToString($1), function() { Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]); });
             },
-            id_.c_str(), event.c_str(), n.c_str());
+            id_.c_str(), event.c_str(), name, data);
+        return *this;
+    }
+
+    WidgetBase &handle(const std::string &event, std::function<void()> &&func) {
+        cb_ = new std::function<void()>(func);
+        handle_(event, WASM_FUNC(livid_func_), (void *)cb_);
         return *this;
     }
 
