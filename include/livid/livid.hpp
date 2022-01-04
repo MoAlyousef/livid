@@ -384,8 +384,8 @@ class WidgetBase {
     }
 
   public:
-    WidgetBase(const WidgetBase &other) : id_(other.id_) {}
-    WidgetBase(WidgetBase &&other) : id_(std::move(other.id_)) {}
+    WidgetBase(const WidgetBase &other) = default;
+    WidgetBase(WidgetBase &&other) = default;
     WidgetBase &operator=(const WidgetBase &other) {
         *this = other;
         return *this;
