@@ -32,15 +32,6 @@ SOFTWARE.
 #include <map>
 #include <vector>
 
-#define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
-
-#define WASM_FUNC(func) (void(&func), #func)
-
-WASM_EXPORT void livid_func_(void *data) {
-    std::function<void()> func = *static_cast<std::function<void()> *>(data);
-    func();
-}
-
 namespace livid {
 
 enum class WidgetType {
@@ -371,6 +362,12 @@ constexpr const char *get_element_str(WidgetType typ) {
         return "div";
     }
 }
+
+__attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
+    std::function<void()> func = *static_cast<std::function<void()> *>(data);
+    func();
+}
+
 } // namespace detail
 
 class WidgetBase {
@@ -512,7 +509,7 @@ class WidgetBase {
     WidgetBase &handle(const std::string &event, std::function<void()> &&func) {
         auto cb_ = std::make_shared<std::function<void()>>(func);
         cbs_[event] = cb_;
-        handle_(event, WASM_FUNC(livid_func_), (void *)cbs_[event].get());
+        handle_(event, "__internal_livid_func__", (void *)cbs_[event].get());
         return *this;
     }
 
@@ -640,8 +637,9 @@ class Widget : public WidgetBase {
     }
 };
 
-class Document {
+class Document final {
   public:
+    explicit Document() = delete;
     static void title(const std::string &t) {
         EM_ASM_({ document.title = Module.UTF8ToString($0); }, t.c_str());
     }
