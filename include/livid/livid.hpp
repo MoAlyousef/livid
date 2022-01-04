@@ -26,10 +26,11 @@ SOFTWARE.
 #define __LIVID_HPP__
 
 #include <emscripten.h>
-#include <string>
-#include <vector>
 #include <functional>
 #include <memory>
+#include <string>
+#include <map>
+#include <vector>
 
 #define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
 
@@ -374,7 +375,8 @@ constexpr const char *get_element_str(WidgetType typ) {
 
 class WidgetBase {
     static size_t val;
-    std::shared_ptr<std::function<void()>> cb_;
+    std::map<std::string, std::shared_ptr<std::function<void()>>> cbs_{};
+
   protected:
     std::string id_ = "";
     WidgetBase(const std::string &id) : id_(id) {}
@@ -400,12 +402,8 @@ class WidgetBase {
     }
 
     WidgetBase &id(const std::string &val) {
-        EM_ASM_(
-            {
-                document.getElementById(Module.UTF8ToString($0)).id = 
-                    Module.UTF8ToString($1);
-            },
-            id_.c_str(), val.c_str());
+        EM_ASM_({ document.getElementById(Module.UTF8ToString($0)).id = Module.UTF8ToString($1); },
+                id_.c_str(), val.c_str());
         id_ = val;
         return *this;
     }
@@ -502,15 +500,19 @@ class WidgetBase {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
-                    .addEventListener(Module.UTF8ToString($1), function() { Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]); });
+                    .addEventListener(
+                        Module.UTF8ToString($1), function() {
+                            Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]);
+                        });
             },
             id_.c_str(), event.c_str(), name, data);
         return *this;
     }
 
     WidgetBase &handle(const std::string &event, std::function<void()> &&func) {
-        cb_ = std::make_shared<std::function<void()>>(func);
-        handle_(event, WASM_FUNC(livid_func_), (void *)cb_.get());
+        auto cb_ = std::make_shared<std::function<void()>>(func);
+        cbs_[event] = cb_;
+        handle_(event, WASM_FUNC(livid_func_), (void *)cbs_[event].get());
         return *this;
     }
 
