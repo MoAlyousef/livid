@@ -364,13 +364,14 @@ constexpr const char *get_element_str(WidgetType typ) {
 } // namespace detail
 
 class WidgetBase {
-    protected:
+  protected:
     std::string id_ = "";
-    WidgetBase(const std::string &id): id_(id) {}
-    public:
-    WidgetBase(const WidgetBase &other): id_(other.id_) {}
-    WidgetBase(WidgetBase &&other): id_(std::move(other.id_)) {}
-    WidgetBase& operator=(const WidgetBase &other) {
+    WidgetBase(const std::string &id) : id_(id) {}
+
+  public:
+    WidgetBase(const WidgetBase &other) : id_(other.id_) {}
+    WidgetBase(WidgetBase &&other) : id_(std::move(other.id_)) {}
+    WidgetBase &operator=(const WidgetBase &other) {
         *this = other;
         return *this;
     }
@@ -378,7 +379,7 @@ class WidgetBase {
     static WidgetBase from_id(const std::string &id) {
         return WidgetBase(id);
     }
-    
+
     std::string id() const {
         return id_;
     }
@@ -494,7 +495,7 @@ class WidgetBase {
     }
 
     std::string text() {
-        auto ptr = (char *)EM_ASM_INT(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).textContent;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
@@ -549,7 +550,10 @@ class WidgetBase {
 
     WidgetBase &style(const std::string &prop, const std::string &html) {
         EM_ASM_(
-            { document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)] = Module.UTF8ToString($2); },
+            {
+                document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)] =
+                    Module.UTF8ToString($2);
+            },
             id_.c_str(), prop.c_str(), html.c_str());
         return *this;
     }
@@ -557,7 +561,8 @@ class WidgetBase {
     std::string style(const std::string &prop) {
         char *ptr = (char *)EM_ASM_INT(
             {
-                const txt = document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)];
+                const txt =
+                    document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)];
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 const ptr = Module._malloc(cnt);
                 Module.stringToUTF8(txt, ptr, cnt);
@@ -570,7 +575,7 @@ class WidgetBase {
 
 template <WidgetType widget_type>
 class Widget : public WidgetBase {
-    Widget(): WidgetBase("") {}
+    Widget() : WidgetBase("") {}
 
   public:
     explicit Widget(const std::string &id) : WidgetBase(id) {
@@ -586,25 +591,23 @@ class Widget : public WidgetBase {
 
     Widget(const Widget &other) = default;
     Widget(Widget &&other) = default;
-    Widget& operator=(const Widget &other) {
+    Widget &operator=(const Widget &other) {
         *this = other;
         return *this;
     }
 };
 
 class Document {
-    public:
+  public:
     static void title(const std::string &t) {
-        EM_ASM_({
-            document.title = Module.UTF8ToString($0);
-        }, t.c_str());
+        EM_ASM_({ document.title = Module.UTF8ToString($0); }, t.c_str());
     }
 
     static std::vector<WidgetBase> elems_by_class(const std::string &klass) {
         std::vector<WidgetBase> v;
-        auto cnt = EM_ASM_INT({
-            return document.getElementsByClassName(Module.UTF8ToString($0)).length;
-        }, klass.c_str());
+        auto cnt =
+            EM_ASM_INT({ return document.getElementsByClassName(Module.UTF8ToString($0)).length; },
+                       klass.c_str());
         for (int i = 0; i < cnt; i++) {
             char *ptr = (char *)EM_ASM_INT(
                 {
@@ -615,7 +618,7 @@ class Document {
                     Module.stringToUTF8(txt, ptr, cnt);
                     return ptr;
                 },
-            klass.c_str(), i);
+                klass.c_str(), i);
             v.push_back(WidgetBase::from_id(std::string(ptr)));
         }
         return v;
@@ -623,9 +626,8 @@ class Document {
 
     static std::vector<WidgetBase> elems_by_tag(const std::string &tag) {
         std::vector<WidgetBase> v;
-        auto cnt = EM_ASM_INT({
-            return document.getElementsByTagName(Module.UTF8ToString($0)).length;
-        }, tag.c_str());
+        auto cnt = EM_ASM_INT(
+            { return document.getElementsByTagName(Module.UTF8ToString($0)).length; }, tag.c_str());
         for (int i = 0; i < cnt; i++) {
             char *ptr = (char *)EM_ASM_INT(
                 {
@@ -636,7 +638,7 @@ class Document {
                     Module.stringToUTF8(txt, ptr, cnt);
                     return ptr;
                 },
-            tag.c_str(), i);
+                tag.c_str(), i);
             v.push_back(WidgetBase::from_id(std::string(ptr)));
         }
         return v;
