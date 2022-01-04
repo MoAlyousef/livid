@@ -363,41 +363,27 @@ constexpr const char *get_element_str(WidgetType typ) {
 }
 } // namespace detail
 
-template <WidgetType widget_type>
-class Widget {
+class WidgetBase {
+    protected:
     std::string id_ = "";
-    Widget() {}
-
-  public:
-    explicit Widget(const std::string &id) : id_(id) {
-        const char *element = detail::get_element_str(widget_type);
-        EM_ASM_(
-            {
-                const widget = document.createElement(Module.UTF8ToString($0));
-                widget.setAttribute('id', Module.UTF8ToString($1));
-                document.body.appendChild(widget);
-            },
-            element, id_.c_str());
-    }
-
-    Widget(const Widget &other): id_(other.id_) {}
-    Widget(Widget &&other): id_(std::move(other.id_)) {}
-    Widget& operator=(const Widget &other) {
+    WidgetBase(const std::string &id): id_(id) {}
+    public:
+    WidgetBase(const WidgetBase &other): id_(other.id_) {}
+    WidgetBase(WidgetBase &&other): id_(std::move(other.id_)) {}
+    WidgetBase& operator=(const WidgetBase &other) {
         *this = other;
         return *this;
     }
 
-    static Widget from_id(const std::string &id) {
-        Widget w;
-        w.id_ = id;
-        return w;
+    static WidgetBase from_id(const std::string &id) {
+        return WidgetBase(id);
     }
-
+    
     std::string id() const {
         return id_;
     }
 
-    Widget &attr(const std::string &attr, const std::string &val) {
+    WidgetBase &attr(const std::string &attr, const std::string &val) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
@@ -421,7 +407,7 @@ class Widget {
         return std::string(ptr);
     }
 
-    Widget &klass(const std::string &val) {
+    WidgetBase &klass(const std::string &val) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
@@ -444,7 +430,7 @@ class Widget {
         return std::string(ptr);
     }
 
-    Widget &type(const std::string &val) {
+    WidgetBase &type(const std::string &val) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
@@ -467,8 +453,7 @@ class Widget {
         return std::string(ptr);
     }
 
-    template <WidgetType other>
-    Widget &append(const Widget<other> &w) {
+    WidgetBase &append(const WidgetBase &w) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
@@ -478,8 +463,7 @@ class Widget {
         return *this;
     }
 
-    template <WidgetType other>
-    Widget &remove(const Widget<other> &w) {
+    WidgetBase &remove(const WidgetBase &w) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0))
@@ -489,7 +473,7 @@ class Widget {
         return *this;
     }
 
-    Widget &handle(const std::string &event, const std::string &name) {
+    WidgetBase &handle(const std::string &event, const std::string &name) {
         std::string n = "_";
         n += name;
         EM_ASM_(
@@ -501,7 +485,7 @@ class Widget {
         return *this;
     }
 
-    Widget &text(const std::string &html) {
+    WidgetBase &text(const std::string &html) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0)).textContent =
@@ -524,7 +508,7 @@ class Widget {
         return std::string(ptr);
     }
 
-    Widget &inner_html(const std::string &html) {
+    WidgetBase &inner_html(const std::string &html) {
         EM_ASM_(
             {
                 document.getElementById(Module.UTF8ToString($0)).innerHtml =
@@ -547,7 +531,7 @@ class Widget {
         return std::string(ptr);
     }
 
-    Widget &href(const std::string &html) {
+    WidgetBase &href(const std::string &html) {
         EM_ASM_(
             { document.getElementById(Module.UTF8ToString($0)).href = Module.UTF8ToString($1); },
             id_.c_str(), html.c_str());
@@ -567,6 +551,40 @@ class Widget {
         return std::string(ptr);
     }
 };
+
+template <WidgetType widget_type>
+class Widget : public WidgetBase {
+    Widget(): WidgetBase("") {}
+
+  public:
+    explicit Widget(const std::string &id) : WidgetBase(id) {
+        const char *element = detail::get_element_str(widget_type);
+        EM_ASM_(
+            {
+                const widget = document.createElement(Module.UTF8ToString($0));
+                widget.setAttribute('id', Module.UTF8ToString($1));
+                document.body.appendChild(widget);
+            },
+            element, id_.c_str());
+    }
+
+    Widget(const Widget &other) = default;
+    Widget(Widget &&other) = default;
+    Widget& operator=(const Widget &other) {
+        *this = other;
+        return *this;
+    }
+};
+
+class Document {
+    public:
+    static void title(const std::string &t) {
+        EM_ASM_({
+            document.title = Module.UTF8ToString($0);
+        }, t.c_str());
+    }
+};
+
 } // namespace livid
 
 #endif

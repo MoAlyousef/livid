@@ -163,3 +163,5 @@ You'll notice that the repo has a minimal shell which you can use, it's passed a
 
 ## Todo
 - Figure out a way to capture variable in callbacks!
+- Add style methods.
+- Add element getters (by TagName and ClassName).
