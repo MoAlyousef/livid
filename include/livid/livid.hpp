@@ -550,6 +550,26 @@ class WidgetBase {
             id_.c_str(), ptr);
         return std::string(ptr);
     }
+
+    WidgetBase &style(const std::string &prop, const std::string &html) {
+        EM_ASM_(
+            { document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)] = Module.UTF8ToString($2); },
+            id_.c_str(), prop.c_str(), html.c_str());
+        return *this;
+    }
+
+    std::string style(const std::string &prop) {
+        char *ptr = nullptr;
+        EM_ASM_(
+            {
+                const txt = document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)];
+                const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                $2 = Module._malloc(cnt);
+                Module.stringToUTF8(txt, $2, cnt);
+            },
+            id_.c_str(), prop.c_str(), ptr);
+        return std::string(ptr);
+    }
 };
 
 template <WidgetType widget_type>
