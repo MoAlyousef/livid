@@ -25,7 +25,6 @@ SOFTWARE.
 #ifndef __LIVID_HPP__
 #define __LIVID_HPP__
 
-#include <cstdio>
 #include <emscripten.h>
 #include <string>
 
