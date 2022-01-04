@@ -11,29 +11,18 @@ The code looks something like this:
 
 using namespace livid;
 
-class AppState {
-    static int counter;
-    public:
-    static void increment() {
-        counter += 1;
-        auto result = Widget<WidgetType::Div>::from_id("result");
-        result.text(std::to_string(counter));
-    }
-    static void decrement() {
-        counter -= 1;
-        auto result = Widget<WidgetType::Div>::from_id("result");
-        result.text(std::to_string(counter));
-    }
-};
-
-int AppState::counter = 0;
-
 WASM_EXPORT void inc(void) {
-    AppState::increment();
+    auto result = Widget<WidgetType::Div>::from_id("result");
+    auto txt = result.text();
+    auto n = atoi(txt.c_str()) + 1;
+    result.text(std::to_string(n));
 }
 
 WASM_EXPORT void dec(void) {
-    AppState::decrement();
+    auto result = Widget<WidgetType::Div>::from_id("result");
+    auto txt = result.text();
+    auto n = atoi(txt.c_str()) -1;
+    result.text(std::to_string(n));
 }
 
 int main() {
@@ -55,11 +44,11 @@ int main() {
 
     Widget<WidgetType::Div> result("result");
     result.text("0");
+    result.style("fontSize", "22px");
 
-    auto elems = Document::elems_by_tag("DIV");
-    
+    auto elems = Document::elems_by_tag("BUTTON");
     for (auto &elem: elems) {
-        elem.style("color", "black");
+        elem.style("fontSize", "22px");
     }
 }
 ```
@@ -165,6 +154,7 @@ You'll notice that the repo has a minimal shell which you can use, it's passed a
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <title>My app</title>
   </head>
