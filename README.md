@@ -28,21 +28,26 @@ WASM_EXPORT void dec(void) {
 int main() {
     Document::title("Hello");
 
-    Widget<WidgetType::Div> div("mydiv"); // The constructor takes an id, which needs to be unique and without spaces
+    Widget<WidgetType::Div> div; 
 
-    Widget<WidgetType::Button> btn1("btn_inc");
-    btn1.text("Increment!"); // This sets the textContent element property
+    Widget<WidgetType::Button> btn1;
+    // This sets the textContent element property
+    btn1.text("Increment!");
     btn1.style("color", "green");
-    btn1.handle("click", "inc"); // This signals that clicks call the inc function
-    div.append(btn1); // widgets are automatically appended to body, here we want to append to the div
+    // This signals that clicks call the inc function
+    btn1.handle("click", "inc");
+    // widgets are automatically appended to body, here we want to append to the div
+    div.append(btn1);
 
-    Widget<WidgetType::Button> btn2("btn_dec");
+    Widget<WidgetType::Button> btn2;
     btn2.text("Decrement!");
     btn2.style("color", "red");
     btn2.handle("click", "dec");
     div.append(btn2);
 
-    Widget<WidgetType::Div> result("result");
+    // The constructor can take an id, which needs to be unique and without spaces, here we need it for the callback
+    Widget<WidgetType::Div> result;
+    result.id("result");
     result.text("0");
     result.style("fontSize", "22px");
 
@@ -66,32 +71,29 @@ using Input = Widget<WidgetType::Input>;
 using Button = Widget<WidgetType::Button>;
 
 int main() {
-    Form("box").klass("box").append(
-        Div("field1")
-            .klass("field") // the class attribute is used by many css libs for styling elements of the same class
-            .append(Label("email").klass("label").text("Email"))
+    Form().klass("box").append(
+        Div().klass("field") // the class attribute is used by many css libs for styling elements of the same class
+            .append(Label().klass("label").text("Email"))
             .append(
-                Div("control1").klass("control").append(
-                    Input("input1")
+                Div().klass("control").append(
+                    Input()
                         .klass("input")
                         .type("email")
                         .attr("placeholder", "m@gmail.com")
                 )
             )
             .append(
-                Div("field2")
-                    .klass("field")
-                    .append(Label("pass").klass("label").text("Password"))
-                    .append(
-                        Div("control2").klass("control").append(
-                            Input("input2")
+                Div().klass("field").append(
+                    Label().klass("label").text("Password")).append(
+                        Div().klass("control").append(
+                            Input()
                                 .klass("input")
                                 .type("password")
                                 .attr("placeholder", "*******")
                         )
                     )
             )
-            .append(Button("button").klass("button is-primary").text("Sign in"))
+            .append(Button().klass("button is-primary").text("Sign in"))
     );
 }
 ```

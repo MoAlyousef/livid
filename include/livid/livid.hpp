@@ -364,9 +364,14 @@ constexpr const char *get_element_str(WidgetType typ) {
 } // namespace detail
 
 class WidgetBase {
+    static size_t val;
   protected:
     std::string id_ = "";
     WidgetBase(const std::string &id) : id_(id) {}
+    WidgetBase() {
+        val += 1;
+        id_ = std::string("_livid_widget_") + std::to_string(val);
+    }
 
   public:
     WidgetBase(const WidgetBase &other) : id_(other.id_) {}
@@ -382,6 +387,17 @@ class WidgetBase {
 
     std::string id() const {
         return id_;
+    }
+
+    WidgetBase &id(const std::string &val) {
+        EM_ASM_(
+            {
+                document.getElementById(Module.UTF8ToString($0)).id = 
+                    Module.UTF8ToString($1);
+            },
+            id_.c_str(), val.c_str());
+        id_ = val;
+        return *this;
     }
 
     WidgetBase &attr(const std::string &attr, const std::string &val) {
@@ -573,11 +589,22 @@ class WidgetBase {
     }
 };
 
+size_t WidgetBase::val = 0;
+
 template <WidgetType widget_type>
 class Widget : public WidgetBase {
-    Widget() : WidgetBase("") {}
-
   public:
+    Widget() : WidgetBase() {
+        const char *element = detail::get_element_str(widget_type);
+        EM_ASM_(
+            {
+                const widget = document.createElement(Module.UTF8ToString($0));
+                widget.setAttribute('id', Module.UTF8ToString($1));
+                document.body.appendChild(widget);
+            },
+            element, id_.c_str());
+    }
+
     explicit Widget(const std::string &id) : WidgetBase(id) {
         const char *element = detail::get_element_str(widget_type);
         EM_ASM_(

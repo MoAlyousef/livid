@@ -10,21 +10,17 @@ using Input = Widget<WidgetType::Input>;
 using Button = Widget<WidgetType::Button>;
 
 int main() {
-    Form("box").klass("box").append(
-        Div("field1")
+    Form().klass("box").append(
+        Div()
             .klass("field") // the class attribute is used by many css libs for styling elements of the same class
-            .append(Label("email").klass("label").text("Email"))
-            .append(Div("control1")
-                        .klass("control")
-                        .append(Input("input1").klass("input").type("email").attr("placeholder", "m@gmail.com")))
-            .append(Div("field2")
-                        .klass("field")
-                        .append(Label("pass").klass("label").text("Password"))
-                        .append(Div("control2")
-                                    .klass("control")
-                                    .append(Input("input2")
-                                                .klass("input")
-                                                .type("password")
-                                                .attr("placeholder", "*******"))))
-            .append(Button("button").klass("button is-primary").text("Sign in")));
+            .append(Label().klass("label").text("Email"))
+            .append(Div().klass("control").append(
+                Input().klass("input").type("email").attr("placeholder", "m@gmail.com")))
+            .append(
+                Div()
+                    .klass("field")
+                    .append(Label().klass("label").text("Password"))
+                    .append(Div().klass("control").append(
+                        Input().klass("input").type("password").attr("placeholder", "*******"))))
+            .append(Button().klass("button is-primary").text("Sign in")));
 }
