@@ -6,22 +6,16 @@ Livid is a single header C++ wasm frontend library leveraging Emscripten.
 
 The code looks something like this:
 ```cpp
-#include <string>
-#include "livid/livid.hpp"
-
-using namespace livid;
-
-class AppState {
     static int counter;
     public:
     static void increment() {
         counter += 1;
-        auto result = WidgetBase::from_id("result");
+        auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(counter));
     }
     static void decrement() {
         counter -= 1;
-        auto result = WidgetBase::from_id("result");
+        auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(counter));
     }
 };

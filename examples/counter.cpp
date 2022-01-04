@@ -8,12 +8,12 @@ class AppState {
     public:
     static void increment() {
         counter += 1;
-        auto result = WidgetBase::from_id("result");
+        auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(counter));
     }
     static void decrement() {
         counter -= 1;
-        auto result = WidgetBase::from_id("result");
+        auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(counter));
     }
 };
