@@ -604,7 +604,7 @@ class Document {
         std::vector<WidgetBase> v;
         auto cnt = EM_ASM_INT({
             return document.getElementsByClassName(Module.UTF8ToString($0)).length;
-        }, tag.c_str());
+        }, klass.c_str());
         for (int i = 0; i < cnt; i++) {
             char *ptr = (char *)EM_ASM_INT(
                 {
@@ -615,7 +615,7 @@ class Document {
                     Module.stringToUTF8(txt, ptr, cnt);
                     return ptr;
                 },
-            tag.c_str(), i);
+            klass.c_str(), i);
             v.push_back(WidgetBase::from_id(std::string(ptr)));
         }
         return v;
