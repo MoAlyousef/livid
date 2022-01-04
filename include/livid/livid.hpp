@@ -29,6 +29,7 @@ SOFTWARE.
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 
 #define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
 
@@ -373,7 +374,7 @@ constexpr const char *get_element_str(WidgetType typ) {
 
 class WidgetBase {
     static size_t val;
-    std::function<void()> *cb_ = nullptr;
+    std::shared_ptr<std::function<void()>> cb_;
   protected:
     std::string id_ = "";
     WidgetBase(const std::string &id) : id_(id) {}
@@ -508,8 +509,8 @@ class WidgetBase {
     }
 
     WidgetBase &handle(const std::string &event, std::function<void()> &&func) {
-        cb_ = new std::function<void()>(func);
-        handle_(event, WASM_FUNC(livid_func_), (void *)cb_);
+        cb_ = std::make_shared<std::function<void()>>(func);
+        handle_(event, WASM_FUNC(livid_func_), (void *)cb_.get());
         return *this;
     }
 
