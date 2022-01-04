@@ -33,7 +33,7 @@ SOFTWARE.
 #include <vector>
 
 namespace livid {
-
+/// List of all available Html elements
 enum class WidgetType {
     Address,
     Article,
@@ -144,6 +144,7 @@ enum class WidgetType {
 };
 
 namespace detail {
+/// [INTERNAL]
 constexpr const char *get_element_str(WidgetType typ) {
     switch (typ) {
     case WidgetType::Address:
@@ -363,6 +364,7 @@ constexpr const char *get_element_str(WidgetType typ) {
     }
 }
 
+/// [INTERNAL]
 __attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
     std::function<void()> func = *static_cast<std::function<void()> *>(data);
     func();
@@ -370,6 +372,7 @@ __attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
 
 } // namespace detail
 
+/// Holds the implementation of all widgets, not specific to WidgetType
 class WidgetBase {
     static size_t val;
     std::map<std::string, std::shared_ptr<std::function<void()>>> cbs_{};
@@ -382,6 +385,20 @@ class WidgetBase {
         id_ = std::string("_livid_widget_") + std::to_string(val);
     }
 
+    /// [INTERNAL]
+    WidgetBase &handle_(const std::string &event, const char *name, void *data) {
+        EM_ASM_(
+            {
+                document.getElementById(Module.UTF8ToString($0))
+                    .addEventListener(
+                        Module.UTF8ToString($1), function() {
+                            Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]);
+                        });
+            },
+            id_.c_str(), event.c_str(), name, data);
+        return *this;
+    }
+
   public:
     WidgetBase(const WidgetBase &other) = default;
     WidgetBase(WidgetBase &&other) = default;
@@ -390,14 +407,17 @@ class WidgetBase {
         return *this;
     }
 
+    /// Construct a WidgetBase from an html id
     static WidgetBase from_id(const std::string &id) {
         return WidgetBase(id);
     }
 
+    /// Get the Html id
     std::string id() const {
         return id_;
     }
 
+    /// Set the Html id
     WidgetBase &id(const std::string &val) {
         EM_ASM_({ document.getElementById(Module.UTF8ToString($0)).id = Module.UTF8ToString($1); },
                 id_.c_str(), val.c_str());
@@ -405,6 +425,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Set the Html attribute 
     WidgetBase &attr(const std::string &attr, const std::string &val) {
         EM_ASM_(
             {
@@ -415,6 +436,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the Html attribute 
     std::string attr(const std::string &attr) {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -429,6 +451,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the Html class 
     WidgetBase &klass(const std::string &val) {
         EM_ASM_(
             {
@@ -439,6 +462,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the Html class 
     std::string klass() {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -451,6 +475,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the Html type of the widget 
     WidgetBase &type(const std::string &val) {
         EM_ASM_(
             {
@@ -461,6 +486,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the Html type of the widget 
     std::string type() {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -473,6 +499,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Append a child
     WidgetBase &append(const WidgetBase &w) {
         EM_ASM_(
             {
@@ -483,6 +510,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Remove a child
     WidgetBase &remove(const WidgetBase &w) {
         EM_ASM_(
             {
@@ -493,19 +521,7 @@ class WidgetBase {
         return *this;
     }
 
-    WidgetBase &handle_(const std::string &event, const char *name, void *data) {
-        EM_ASM_(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .addEventListener(
-                        Module.UTF8ToString($1), function() {
-                            Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]);
-                        });
-            },
-            id_.c_str(), event.c_str(), name, data);
-        return *this;
-    }
-
+    /// Add an event listener
     WidgetBase &handle(const std::string &event, std::function<void()> &&func) {
         auto cb_ = std::make_shared<std::function<void()>>(func);
         cbs_[event] = cb_;
@@ -513,6 +529,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Set the text content
     WidgetBase &text(const std::string &html) {
         EM_ASM_(
             {
@@ -523,6 +540,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the text content
     std::string text() {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -536,6 +554,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the inner html
     WidgetBase &inner_html(const std::string &html) {
         EM_ASM_(
             {
@@ -546,6 +565,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the inner html
     std::string inner_html() {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -558,6 +578,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the href value
     WidgetBase &href(const std::string &html) {
         EM_ASM_(
             { document.getElementById(Module.UTF8ToString($0)).href = Module.UTF8ToString($1); },
@@ -565,6 +586,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the href value
     std::string href() {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -577,6 +599,7 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the style of the widget
     WidgetBase &style(const std::string &prop, const std::string &html) {
         EM_ASM_(
             {
@@ -587,6 +610,7 @@ class WidgetBase {
         return *this;
     }
 
+    /// Get the style of the widget
     std::string style(const std::string &prop) {
         char *ptr = (char *)EM_ASM_INT(
             {
@@ -640,10 +664,13 @@ class Widget : public WidgetBase {
 class Document final {
   public:
     explicit Document() = delete;
+
+    /// Set the title of the document
     static void title(const std::string &t) {
         EM_ASM_({ document.title = Module.UTF8ToString($0); }, t.c_str());
     }
 
+    /// Get all elements of the specified html className
     static std::vector<WidgetBase> elems_by_class(const std::string &klass) {
         std::vector<WidgetBase> v;
         auto cnt =
@@ -665,6 +692,7 @@ class Document final {
         return v;
     }
 
+    /// Get all elements of the specified html tagName
     static std::vector<WidgetBase> elems_by_tag(const std::string &tag) {
         std::vector<WidgetBase> v;
         auto cnt = EM_ASM_INT(
