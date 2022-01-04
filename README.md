@@ -55,6 +55,12 @@ int main() {
 
     Widget<WidgetType::Div> result("result");
     result.text("0");
+
+    auto elems = Document::elems_by_tag("DIV");
+    
+    for (auto &elem: elems) {
+        elem.style("color", "black");
+    }
 }
 ```
 You can also use a builder pattern:
@@ -168,5 +174,4 @@ You'll notice that the repo has a minimal shell which you can use, it's passed a
 ```
 
 ## Todo
-- Add element getters (by TagName and ClassName), probably added to the Document struct.
 - Figure out a way to capture variable in callbacks!

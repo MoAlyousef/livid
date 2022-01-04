@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <emscripten.h>
 #include <string>
+#include <vector>
 
 #define WASM_EXPORT EMSCRIPTEN_KEEPALIVE extern "C"
 
@@ -393,16 +394,16 @@ class WidgetBase {
     }
 
     std::string attr(const std::string &attr) {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0))
                                 .getAttribute(Module.UTF8ToString($1));
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $2, cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
-            id_.c_str(), attr.c_str(), ptr);
+            id_.c_str(), attr.c_str());
         return std::string(ptr);
     }
 
@@ -417,15 +418,14 @@ class WidgetBase {
     }
 
     std::string klass() {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('class');
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 $1 = Module._malloc(cnt);
                 Module.stringToUTF8(txt, $1, cnt);
             },
-            id_.c_str(), ptr);
+            id_.c_str());
         return std::string(ptr);
     }
 
@@ -440,15 +440,14 @@ class WidgetBase {
     }
 
     std::string type() {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('type');
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 $1 = Module._malloc(cnt);
                 Module.stringToUTF8(txt, $1, cnt);
             },
-            id_.c_str(), ptr);
+            id_.c_str());
         return std::string(ptr);
     }
 
@@ -495,15 +494,15 @@ class WidgetBase {
     }
 
     std::string text() {
-        char *ptr = nullptr;
-        EM_ASM_(
+        auto ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).textContent;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $1, cnt);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
-            id_.c_str(), ptr);
+            id_.c_str());
         return std::string(ptr);
     }
 
@@ -518,15 +517,14 @@ class WidgetBase {
     }
 
     std::string inner_html() {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).innerHtml;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 $1 = Module._malloc(cnt);
                 Module.stringToUTF8(txt, $1, cnt);
             },
-            id_.c_str(), ptr);
+            id_.c_str());
         return std::string(ptr);
     }
 
@@ -538,15 +536,14 @@ class WidgetBase {
     }
 
     std::string href() {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).href;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 $1 = Module._malloc(cnt);
                 Module.stringToUTF8(txt, $1, cnt);
             },
-            id_.c_str(), ptr);
+            id_.c_str());
         return std::string(ptr);
     }
 
@@ -558,15 +555,15 @@ class WidgetBase {
     }
 
     std::string style(const std::string &prop) {
-        char *ptr = nullptr;
-        EM_ASM_(
+        char *ptr = (char *)EM_ASM_INT(
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)];
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $2 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $2, cnt);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
-            id_.c_str(), prop.c_str(), ptr);
+            id_.c_str(), prop.c_str());
         return std::string(ptr);
     }
 };
@@ -602,8 +599,49 @@ class Document {
             document.title = Module.UTF8ToString($0);
         }, t.c_str());
     }
-};
 
+    static std::vector<WidgetBase> elems_by_class(const std::string &klass) {
+        std::vector<WidgetBase> v;
+        auto cnt = EM_ASM_INT({
+            return document.getElementsByClassName(Module.UTF8ToString($0)).length;
+        }, tag.c_str());
+        for (int i = 0; i < cnt; i++) {
+            char *ptr = (char *)EM_ASM_INT(
+                {
+                    let x = document.getElementsByClassName(Module.UTF8ToString($0));
+                    const txt = x[$1].id;
+                    const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                    const ptr = Module._malloc(cnt);
+                    Module.stringToUTF8(txt, ptr, cnt);
+                    return ptr;
+                },
+            tag.c_str(), i);
+            v.push_back(WidgetBase::from_id(std::string(ptr)));
+        }
+        return v;
+    }
+
+    static std::vector<WidgetBase> elems_by_tag(const std::string &tag) {
+        std::vector<WidgetBase> v;
+        auto cnt = EM_ASM_INT({
+            return document.getElementsByTagName(Module.UTF8ToString($0)).length;
+        }, tag.c_str());
+        for (int i = 0; i < cnt; i++) {
+            char *ptr = (char *)EM_ASM_INT(
+                {
+                    let x = document.getElementsByTagName(Module.UTF8ToString($0));
+                    const txt = x[$1].id;
+                    const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                    const ptr = Module._malloc(cnt);
+                    Module.stringToUTF8(txt, ptr, cnt);
+                    return ptr;
+                },
+            tag.c_str(), i);
+            v.push_back(WidgetBase::from_id(std::string(ptr)));
+        }
+        return v;
+    }
+};
 } // namespace livid
 
 #endif
