@@ -1095,6 +1095,83 @@ class Widget : public WidgetBase {
     }
 };
 
+template <>
+class Widget<WidgetType::Svg> : public WidgetBase {
+  public:
+    Widget() : WidgetBase() {
+        EM_ASM_(
+            {
+                const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                widget.setAttribute('id', Module.UTF8ToString($0));
+                document.body.appendChild(widget);
+            },
+            id_.c_str());
+    }
+
+    explicit Widget(const std::string &id) : WidgetBase(id) {
+        EM_ASM_(
+            {
+                const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                widget.setAttribute('id', Module.UTF8ToString($0));
+                document.body.appendChild(widget);
+            },
+            id_.c_str());
+    }
+
+    Widget(const Widget &other) = default;
+    Widget(Widget &&other) = default;
+    Widget &operator=(const Widget &other) {
+        *this = other;
+        return *this;
+    }
+};
+
+/// A namespaced widget, like svg
+class NSWidget : public WidgetBase {
+  public:
+    explicit NSWidget(const std::string &ns, const std::string &tag, const std::string &id)
+        : WidgetBase(id) {
+        EM_ASM_(
+            {
+                const widget =
+                    document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
+                widget.setAttribute('id', Module.UTF8ToString($2));
+                document.body.appendChild(widget);
+            },
+            ns.c_str(), tag.c_str(), id_.c_str());
+    }
+
+    explicit NSWidget(const std::string &ns, const std::string &tag) : WidgetBase() {
+        EM_ASM_(
+            {
+                const widget =
+                    document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
+                widget.setAttribute('id', Module.UTF8ToString($2));
+                document.body.appendChild(widget);
+            },
+            ns.c_str(), tag.c_str(), id_.c_str());
+    }
+
+    NSWidget(const NSWidget &other) = default;
+    NSWidget(NSWidget &&other) = default;
+    NSWidget &operator=(const NSWidget &other) {
+        *this = other;
+        return *this;
+    }
+
+    /// Set the Html attribute
+    NSWidget &ns_attr(const std::string &ns, const std::string &attr, const std::string &val) {
+        EM_ASM_(
+            {
+                document.getElementById(Module.UTF8ToString($1))
+                    .setAttributeNS(Module.UTF8ToString($0), Module.UTF8ToString($2),
+                                    Module.UTF8ToString($3));
+            },
+            ns.c_str(), id_.c_str(), attr.c_str(), val.c_str());
+        return *this;
+    }
+};
+
 class Document final {
   public:
     explicit Document() = delete;
