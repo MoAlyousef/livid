@@ -903,7 +903,7 @@ class WidgetBase {
                 const txt = document.getElementById(Module.UTF8ToString($0))
                                 .getAttribute(Module.UTF8ToString($1));
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
+                const ptr = Module._malloc(cnt);
                 Module.stringToUTF8(txt, ptr, cnt);
                 return ptr;
             },
@@ -928,8 +928,9 @@ class WidgetBase {
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('class');
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $1, cnt);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
             id_.c_str());
         return std::string(ptr);
@@ -1007,8 +1008,9 @@ class WidgetBase {
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).innerHtml;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $1, cnt);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
             id_.c_str());
         return std::string(ptr);
@@ -1028,8 +1030,9 @@ class WidgetBase {
             {
                 const txt = document.getElementById(Module.UTF8ToString($0)).href;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $1, cnt);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
             },
             id_.c_str());
         return std::string(ptr);
