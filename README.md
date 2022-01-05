@@ -114,23 +114,22 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void Increment() { counter++; update(); }
+    static void increment() { counter++; update(); }
     
-    static void Decrement() { counter--; update(); }
+    static void decrement() { counter--; update(); }
     
     static void update() { Div::from_id("result").text(std::to_string(counter)); }
     
-    void view() {
+    static void view() {
         Div()
-            .append(Button().text("+").handle(Event::Click, Increment))
-            .append(Button().text("-").handle(Event::Click, Decrement))
+            .append(Button().text("+").handle(Event::Click, increment))
+            .append(Button().text("-").handle(Event::Click, decrement))
             .append(Div().id("result").text(std::to_string(counter)));
     }
 };
 
 int main() {
-    AppState a;
-    a.view();
+    AppState::view();
 }
 ```
 ## Building
@@ -196,6 +195,7 @@ You'll notice that the repo has a minimal shell which you can use, it's passed a
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <title>My app</title>
   </head>
+  <body>
   {{{ SCRIPT }}}
   </body>
 </html>
