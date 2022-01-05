@@ -835,15 +835,15 @@ __attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
 
 /// Holds the implementation of all widgets, not specific to WidgetType
 class WidgetBase {
-    static size_t val;
+    static inline size_t val = 0;
     std::map<Event, std::shared_ptr<std::function<void()>>> cbs_{};
 
   protected:
     std::string id_ = "";
     WidgetBase(const std::string &id) : id_(id) {}
     WidgetBase() {
-        val += 1;
         id_ = std::string("_livid_widget_") + std::to_string(val);
+        val += 1;
     }
 
     /// [INTERNAL]
@@ -1085,8 +1085,6 @@ class WidgetBase {
         return std::string(ptr);
     }
 };
-
-size_t WidgetBase::val = 0;
 
 template <WidgetType widget_type>
 class Widget : public WidgetBase {

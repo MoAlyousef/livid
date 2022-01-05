@@ -7,7 +7,7 @@ using Div = Widget<WidgetType::Div>;
 using Button = Widget<WidgetType::Button>;
 
 class AppState {
-    static int counter;
+    static inline int counter = 0;
 
   public:
     static void Increment() {
@@ -29,8 +29,6 @@ class AppState {
             .append(Div().id("result").text("0"));
     }
 };
-
-int AppState::counter = 0;
 
 int main() {
     AppState a;
