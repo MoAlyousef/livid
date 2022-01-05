@@ -20,3 +20,20 @@ int main() {
     circle.attr("fill", "red");
     svg.append(circle);
 }
+
+// or
+/*
+using Svg = Widget<WidgetType::Svg>;
+
+Svg()
+    .attr("viewBox", "0 0 300 300")
+    .attr("width", "300")
+    .attr("height", "300")
+    .style(Style::Display, "block")
+    .append(NSWidget("http://www.w3.org/2000/svg", "circle")
+                .attr("cx", "50")
+                .attr("cy", "50")
+                .attr("r", "40")
+                .attr("stroke", "black")
+                .attr("stroke-width", "3"));
+*/
