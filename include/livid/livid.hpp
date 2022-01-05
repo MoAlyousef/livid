@@ -32,6 +32,12 @@ SOFTWARE.
 #include <string>
 #include <vector>
 
+/// [INTERNAL]
+__attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
+    std::function<void()> func = *static_cast<std::function<void()> *>(data);
+    func();
+}
+
 namespace livid {
 
 /// List of all available Html elements
@@ -537,9 +543,7 @@ constexpr const char *get_element_str(WidgetType typ) {
         default: return "div";
     }
 }
-// clang-format on
 
-// clang-format off
 constexpr const char *get_event_str(Event ev) {
     switch (ev) {
         case Event::Abort: return "abort";
@@ -629,9 +633,7 @@ constexpr const char *get_event_str(Event ev) {
         case Event::Wheel: return "wheel";
     }
 }
-// clang-format on
 
-// clang-format off
 constexpr const char *get_style_str(Style s) {
     switch (s) {
         case Style::AlignContent: return "alignContent";
@@ -824,27 +826,23 @@ constexpr const char *get_style_str(Style s) {
     }
 }
 // clang-format on
-
-/// [INTERNAL]
-__attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
-    std::function<void()> func = *static_cast<std::function<void()> *>(data);
-    func();
-}
-
 } // namespace detail
 
 /// Holds the implementation of all widgets, not specific to WidgetType
 class WidgetBase {
     static inline size_t val = 0;
+
     std::map<Event, std::shared_ptr<std::function<void()>>> cbs_{};
 
   protected:
     std::string id_ = "";
-    WidgetBase(const std::string &id) : id_(id) {}
+
     WidgetBase() {
         id_ = std::string("_livid_widget_") + std::to_string(val);
         val += 1;
     }
+
+    explicit WidgetBase(const std::string &id) : id_(id) {}
 
     /// [INTERNAL]
     WidgetBase &handle_(Event event, const char *name, void *data) {
@@ -863,7 +861,9 @@ class WidgetBase {
 
   public:
     WidgetBase(const WidgetBase &other) = default;
+
     WidgetBase(WidgetBase &&other) = default;
+
     WidgetBase &operator=(const WidgetBase &other) {
         *this = other;
         return *this;
@@ -1088,7 +1088,9 @@ class Widget : public WidgetBase {
     }
 
     Widget(const Widget &other) = default;
+
     Widget(Widget &&other) = default;
+
     Widget &operator=(const Widget &other) {
         *this = other;
         return *this;
@@ -1153,7 +1155,9 @@ class NSWidget : public WidgetBase {
     }
 
     NSWidget(const NSWidget &other) = default;
+
     NSWidget(NSWidget &&other) = default;
+    
     NSWidget &operator=(const NSWidget &other) {
         *this = other;
         return *this;

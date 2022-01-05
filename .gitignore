@@ -1,4 +1,5 @@
 index.html
 index.js
 index.wasm
+*.o
 bin

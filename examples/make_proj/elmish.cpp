@@ -10,15 +10,9 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void Increment() {
-        counter++;
-        update();
-    }
+    static void Increment() { counter++; update(); }
     
-    static void Decrement() {
-        counter--;
-        update();
-    }
+    static void Decrement() { counter--; update(); }
     
     static void update() { Div::from_id("result").text(std::to_string(counter)); }
     

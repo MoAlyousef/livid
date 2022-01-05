@@ -114,15 +114,9 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void Increment() {
-        counter++;
-        update();
-    }
+    static void Increment() { counter++; update(); }
     
-    static void Decrement() {
-        counter--;
-        update();
-    }
+    static void Decrement() { counter--; update(); }
     
     static void update() { Div::from_id("result").text(std::to_string(counter)); }
     
@@ -145,7 +139,7 @@ Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
 ```
-$ em++ -std=c++17 -Iinclude examples/counter.cpp -s EXTRA_EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall'] -o index.html --shell-file my_shell.html
+$ em++ -std=c++17 -O3 -Iinclude examples/counter.cpp -s EXTRA_EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall'] -o index.html --shell-file my_shell.html
 ```
 
 With CMake:
@@ -171,7 +165,10 @@ target_compile_features(index PRIVATE cxx_std_17)
 target_link_options(index PRIVATE --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html)
 target_link_libraries(index PRIVATE livid::livid)
 ```
-Then configure with `emcmake cmake -Bbin`, and build with `cmake --build bin`.
+Then configure with `emcmake cmake -Bbin -DCMAKE_BUILD_TYPE=Release`, and build with `cmake --build bin`.
+
+There's also a Makefile in the examples directory (under make_proj) if you prefer to use make.
+
 The build usually outputs 3 files, and html, wasm and js files, you need all 3 to run your program.
 Building in release mode (`-O3` or `-DCMAKE_BUILD_TYPE=Release`), the total size of a simple project is around 30kb.
 
