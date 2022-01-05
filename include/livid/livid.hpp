@@ -933,30 +933,6 @@ class WidgetBase {
         return std::string(ptr);
     }
 
-    /// Set the Html type of the widget
-    WidgetBase &type(const std::string &val) {
-        EM_ASM_(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .setAttribute('type', Module.UTF8ToString($1));
-            },
-            id_.c_str(), val.c_str());
-        return *this;
-    }
-
-    /// Get the Html type of the widget
-    std::string type() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('type');
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                $1 = Module._malloc(cnt);
-                Module.stringToUTF8(txt, $1, cnt);
-            },
-            id_.c_str());
-        return std::string(ptr);
-    }
-
     /// Append a child
     WidgetBase &append(const WidgetBase &w) {
         EM_ASM_(

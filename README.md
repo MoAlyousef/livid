@@ -78,21 +78,21 @@ int main() {
                 Div().klass("control").append(
                     Input()
                         .klass("input")
-                        .type("email")
+                        .attr("type", "email")
                         .attr("placeholder", "m@gmail.com")
+                    )
                 )
-            )
             .append(
                 Div().klass("field").append(
                     Label().klass("label").text("Password")).append(
                         Div().klass("control").append(
                             Input()
                                 .klass("input")
-                                .type("password")
+                                .attr("type", "password")
                                 .attr("placeholder", "*******")
                         )
                     )
-            )
+                )
             .append(Button().klass("button is-primary").text("Sign in"))
     );
 }
