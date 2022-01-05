@@ -14,5 +14,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: mymindstorm/setup-emsdk@v11
-    - name: cd examples/make_proj && make
-      run: make
+    - name: make
+      run: cd examples/make_proj && make
