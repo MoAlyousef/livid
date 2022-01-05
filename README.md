@@ -168,7 +168,7 @@ Then configure with `emcmake cmake -Bbin -DCMAKE_BUILD_TYPE=Release`, and build 
 
 There's also a Makefile in the examples directory (under make_proj) if you prefer to use make.
 
-The build usually outputs 3 files, and html, wasm and js files, you need all 3 to run your program.
+The build usually outputs 3 files, an html, wasm and js files, you need all 3 to run your program.
 Building in release mode (`-O3` or `-DCMAKE_BUILD_TYPE=Release`), the total size of a simple project is around 30kb.
 
 ## Running
