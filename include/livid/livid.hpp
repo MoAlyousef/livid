@@ -25,6 +25,8 @@ SOFTWARE.
 #ifndef __LIVID_HPP__
 #define __LIVID_HPP__
 
+#include <cstdio>
+#include <cstring>
 #include <emscripten.h>
 #include <functional>
 #include <map>
@@ -1157,7 +1159,7 @@ class NSWidget : public WidgetBase {
     NSWidget(const NSWidget &other) = default;
 
     NSWidget(NSWidget &&other) = default;
-    
+
     NSWidget &operator=(const NSWidget &other) {
         *this = other;
         return *this;
@@ -1228,6 +1230,27 @@ class Document final {
         return v;
     }
 };
+
+/// Equivalent to console.log
+template <typename... Ts>
+void log(const char *fmt, Ts... ts) {
+    auto sz = snprintf(nullptr, 0, fmt, ts...);
+    auto buf = (char *)malloc(sz);
+    auto ret = snprintf(buf, sz, fmt, ts...);
+    EM_ASM_({ console.log(Module.UTF8ToString($0)); }, buf);
+    free(buf);
+}
+
+/// Equivalent to JS alert
+template <typename... Ts>
+void alert(const char *fmt, Ts... ts) {
+    auto sz = snprintf(nullptr, 0, fmt, ts...);
+    auto buf = (char *)malloc(sz);
+    auto ret = snprintf(buf, sz, fmt, ts...);
+    EM_ASM_({ alert(Module.UTF8ToString($0)); }, buf);
+    free(buf);
+}
+
 } // namespace livid
 
 #endif
