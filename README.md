@@ -130,7 +130,7 @@ class AppState {
         Div()
             .append(Button().text("+").handle(Event::Click, Increment))
             .append(Button().text("-").handle(Event::Click, Decrement))
-            .append(Div().id("result").text("0"));
+            .append(Div().id("result").text(std::to_string(counter)));
     }
 };
 
