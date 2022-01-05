@@ -100,6 +100,47 @@ int main() {
 This uses Bulma for css styling.
 ![image](https://user-images.githubusercontent.com/37966791/147970535-12542b64-94e2-4660-86d1-43846d9ce92f.png)
 
+You can also use an elmish architecture for your application:
+```cpp
+#include "livid/livid.hpp"
+#include <string>
+
+using namespace livid;
+
+using Div = Widget<WidgetType::Div>;
+using Button = Widget<WidgetType::Button>;
+
+class AppState {
+    static int counter;
+
+  public:
+    static void Increment() {
+        counter++;
+        update();
+    }
+    
+    static void Decrement() {
+        counter--;
+        update();
+    }
+    
+    static void update() { Div::from_id("result").text(std::to_string(counter)); }
+    
+    void view() {
+        Div()
+            .append(Button().text("+").handle(Event::Click, Increment))
+            .append(Button().text("-").handle(Event::Click, Decrement))
+            .append(Div().id("result").text("0"));
+    }
+};
+
+int AppState::counter = 0;
+
+int main() {
+    AppState a;
+    a.view();
+}
+```
 ## Building
 
 Assuming you have a working installation of Emscripten:
