@@ -849,7 +849,7 @@ class WidgetBase {
     /// [INTERNAL]
     WidgetBase &handle_(Event event, const char *name, void *data) {
         auto ev = detail::get_event_str(event);
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .addEventListener(
@@ -879,7 +879,7 @@ class WidgetBase {
 
     /// Set the Html id
     WidgetBase &id(const std::string &val) {
-        EM_ASM_({ document.getElementById(Module.UTF8ToString($0)).id = Module.UTF8ToString($1); },
+        EM_ASM_INT({ document.getElementById(Module.UTF8ToString($0)).id = Module.UTF8ToString($1); },
                 id_.c_str(), val.c_str());
         id_ = val;
         return *this;
@@ -887,7 +887,7 @@ class WidgetBase {
 
     /// Set the Html attribute
     WidgetBase &attr(const std::string &attr, const std::string &val) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .setAttribute(Module.UTF8ToString($1), Module.UTF8ToString($2));
@@ -913,7 +913,7 @@ class WidgetBase {
 
     /// Set the Html class
     WidgetBase &klass(const std::string &val) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .setAttribute('class', Module.UTF8ToString($1));
@@ -938,7 +938,7 @@ class WidgetBase {
 
     /// Append a child
     WidgetBase &append(const WidgetBase &w) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .appendChild(document.getElementById(Module.UTF8ToString($1)));
@@ -949,7 +949,7 @@ class WidgetBase {
 
     /// Remove a child
     WidgetBase &remove(const WidgetBase &w) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0))
                     .removeChild(document.getElementById(Module.UTF8ToString($1)));
@@ -968,7 +968,7 @@ class WidgetBase {
 
     /// Set the text content
     WidgetBase &text(const std::string &html) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0)).textContent =
                     Module.UTF8ToString($1);
@@ -993,7 +993,7 @@ class WidgetBase {
 
     /// Set the inner html
     WidgetBase &inner_html(const std::string &html) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0)).innerHtml =
                     Module.UTF8ToString($1);
@@ -1018,7 +1018,7 @@ class WidgetBase {
 
     /// Set the href value
     WidgetBase &href(const std::string &html) {
-        EM_ASM_(
+        EM_ASM_INT(
             { document.getElementById(Module.UTF8ToString($0)).href = Module.UTF8ToString($1); },
             id_.c_str(), html.c_str());
         return *this;
@@ -1041,7 +1041,7 @@ class WidgetBase {
     /// Set the style of the widget
     WidgetBase &style(Style style, const std::string &html) {
         auto s = detail::get_style_str(style);
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)] =
                     Module.UTF8ToString($2);
@@ -1072,7 +1072,7 @@ class Widget : public WidgetBase {
   public:
     Widget() : WidgetBase() {
         const char *element = detail::get_element_str(widget_type);
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget = document.createElement(Module.UTF8ToString($0));
                 widget.setAttribute('id', Module.UTF8ToString($1));
@@ -1083,7 +1083,7 @@ class Widget : public WidgetBase {
 
     explicit Widget(const std::string &id) : WidgetBase(id) {
         const char *element = detail::get_element_str(widget_type);
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget = document.createElement(Module.UTF8ToString($0));
                 widget.setAttribute('id', Module.UTF8ToString($1));
@@ -1106,7 +1106,7 @@ template <>
 class Widget<WidgetType::Svg> : public WidgetBase {
   public:
     Widget() : WidgetBase() {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 widget.setAttribute('id', Module.UTF8ToString($0));
@@ -1116,7 +1116,7 @@ class Widget<WidgetType::Svg> : public WidgetBase {
     }
 
     explicit Widget(const std::string &id) : WidgetBase(id) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 widget.setAttribute('id', Module.UTF8ToString($0));
@@ -1138,7 +1138,7 @@ class NSWidget : public WidgetBase {
   public:
     explicit NSWidget(const std::string &ns, const std::string &tag, const std::string &id)
         : WidgetBase(id) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget =
                     document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
@@ -1149,7 +1149,7 @@ class NSWidget : public WidgetBase {
     }
 
     explicit NSWidget(const std::string &ns, const std::string &tag) : WidgetBase() {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 const widget =
                     document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
@@ -1170,7 +1170,7 @@ class NSWidget : public WidgetBase {
 
     /// Set the Html attribute
     NSWidget &ns_attr(const std::string &ns, const std::string &attr, const std::string &val) {
-        EM_ASM_(
+        EM_ASM_INT(
             {
                 document.getElementById(Module.UTF8ToString($1))
                     .setAttributeNS(Module.UTF8ToString($0), Module.UTF8ToString($2),
@@ -1187,7 +1187,7 @@ class Document final {
 
     /// Set the title of the document
     static void title(const std::string &t) {
-        EM_ASM_({ document.title = Module.UTF8ToString($0); }, t.c_str());
+        EM_ASM_INT({ document.title = Module.UTF8ToString($0); }, t.c_str());
     }
 
     /// Get all elements of the specified html className
@@ -1240,7 +1240,7 @@ void log(const char *fmt, Ts... ts) {
     auto sz = snprintf(nullptr, 0, fmt, ts...);
     auto buf = (char *)malloc(sz);
     auto ret = snprintf(buf, sz, fmt, ts...);
-    EM_ASM_({ console.log(Module.UTF8ToString($0)); }, buf);
+    EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, buf);
     free(buf);
 }
 
@@ -1250,7 +1250,7 @@ void alert(const char *fmt, Ts... ts) {
     auto sz = snprintf(nullptr, 0, fmt, ts...);
     auto buf = (char *)malloc(sz);
     auto ret = snprintf(buf, sz, fmt, ts...);
-    EM_ASM_({ alert(Module.UTF8ToString($0)); }, buf);
+    EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
     free(buf);
 }
 
