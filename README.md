@@ -203,4 +203,4 @@ You'll notice that the repo has a minimal shell which you can use, it's passed a
 
 ## Documentation
 
-Still a work in progress, you can generate it using `doxygen doxyfile`.
+Still a work in progress, you can generate it using `doxygen livid.dox`.
