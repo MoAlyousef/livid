@@ -991,11 +991,36 @@ class WidgetBase {
         return std::string(ptr);
     }
 
+    /// Set the outer html
+    WidgetBase &outer_html(const std::string &html) {
+        EM_ASM_INT(
+            {
+                document.getElementById(Module.UTF8ToString($0)).outerHTML =
+                    Module.UTF8ToString($1);
+            },
+            id_.c_str(), html.c_str());
+        return *this;
+    }
+
+    /// Get the outer html
+    std::string outer_html() {
+        char *ptr = (char *)EM_ASM_INT(
+            {
+                const txt = document.getElementById(Module.UTF8ToString($0)).outerHTML;
+                const cnt = (Module.lengthBytesUTF8(txt) + 1);
+                const ptr = Module._malloc(cnt);
+                Module.stringToUTF8(txt, ptr, cnt);
+                return ptr;
+            },
+            id_.c_str());
+        return std::string(ptr);
+    }
+
     /// Set the inner html
     WidgetBase &inner_html(const std::string &html) {
         EM_ASM_INT(
             {
-                document.getElementById(Module.UTF8ToString($0)).innerHtml =
+                document.getElementById(Module.UTF8ToString($0)).innerHTML =
                     Module.UTF8ToString($1);
             },
             id_.c_str(), html.c_str());
@@ -1006,7 +1031,7 @@ class WidgetBase {
     std::string inner_html() {
         char *ptr = (char *)EM_ASM_INT(
             {
-                const txt = document.getElementById(Module.UTF8ToString($0)).innerHtml;
+                const txt = document.getElementById(Module.UTF8ToString($0)).innerHTML;
                 const cnt = (Module.lengthBytesUTF8(txt) + 1);
                 const ptr = Module._malloc(cnt);
                 Module.stringToUTF8(txt, ptr, cnt);
