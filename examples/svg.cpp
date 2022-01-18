@@ -19,6 +19,11 @@ int main() {
     circle.attr("stroke-width", "3");
     circle.attr("fill", "red");
     svg.append(circle);
+
+    // // Or
+    // svg.inner_html(R"lit(
+    //     <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"></circle>
+    // )lit");
 }
 
 // or
