@@ -147,7 +147,7 @@ You need a CMakeLists.txt file with contents similar to:
 cmake_minimum_required(VERSION 3.15)
 project(cmake_livid_example)
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall']")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 -s EVAL_CTORS=2 -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall']")
 
 include(FetchContent)
 FetchContent_Declare(
