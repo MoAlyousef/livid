@@ -138,7 +138,7 @@ Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
 ```
-$ em++ -std=c++17 -O3 -Iinclude examples/counter.cpp -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall'] -s EVAL_CTORS -o index.html --shell-file my_shell.html
+$ em++ -std=c++17 -O3 -Iinclude examples/counter.cpp -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall'] -s EVAL_CTORS=2 -o index.html --shell-file my_shell.html
 ```
 
 With CMake:
