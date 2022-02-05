@@ -1263,8 +1263,8 @@ class Document final {
 template <typename... Ts>
 void log(const char *fmt, Ts... ts) {
     auto sz = snprintf(nullptr, 0, fmt, ts...);
-    auto buf = (char *)malloc(sz);
-    auto ret = snprintf(buf, sz, fmt, ts...);
+    auto buf = (char *)malloc(sz + 1);
+    auto ret = snprintf(buf, sz + 1, fmt, ts...);
     EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, buf);
     free(buf);
 }
@@ -1273,8 +1273,8 @@ void log(const char *fmt, Ts... ts) {
 template <typename... Ts>
 void alert(const char *fmt, Ts... ts) {
     auto sz = snprintf(nullptr, 0, fmt, ts...);
-    auto buf = (char *)malloc(sz);
-    auto ret = snprintf(buf, sz, fmt, ts...);
+    auto buf = (char *)malloc(sz + 1);
+    auto ret = snprintf(buf, sz + 1, fmt, ts...);
     EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
     free(buf);
 }
