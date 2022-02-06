@@ -30,7 +30,6 @@ SOFTWARE.
 #include <emscripten.h>
 #include <functional>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -834,7 +833,7 @@ constexpr const char *get_style_str(Style s) {
 class WidgetBase {
     static inline size_t val = 0;
 
-    std::map<Event, std::shared_ptr<std::function<void()>>> cbs_{};
+    std::map<Event, std::function<void()> *> cbs_{};
 
   protected:
     std::string id_ = "";
@@ -960,9 +959,9 @@ class WidgetBase {
 
     /// Add an event listener
     WidgetBase &handle(Event event, std::function<void()> &&func) {
-        auto cb_ = std::make_shared<std::function<void()>>(func);
+        auto cb_ = new std::function<void()>(func);
         cbs_[event] = cb_;
-        handle_(event, "__internal_livid_func__", (void *)cbs_[event].get());
+        handle_(event, "__internal_livid_func__", (void *)cbs_[event]);
         return *this;
     }
 
