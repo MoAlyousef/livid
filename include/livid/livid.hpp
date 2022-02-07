@@ -873,6 +873,14 @@ class WidgetBase {
     /// Construct a WidgetBase from an html id
     static WidgetBase from_id(const std::string &id) { return WidgetBase(id); }
 
+    /// Delete a widget
+    static void delete_widget(WidgetBase &&elem) {
+        elem.outer_html("");
+        for (auto cb: elem.cbs_) {
+            delete cb.second;
+        }
+    }
+
     /// Get the Html id
     std::string id() const { return id_; }
 
