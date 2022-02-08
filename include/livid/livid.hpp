@@ -1264,27 +1264,82 @@ class Document final {
         }
         return v;
     }
+
+    /// Equivalent to JS alert
+    template <typename... Ts>
+    static void alert(const char *fmt, Ts... ts) {
+        auto sz = snprintf(nullptr, 0, fmt, ts...);
+        auto buf = (char *)malloc(sz + 1);
+        auto ret = snprintf(buf, sz + 1, fmt, ts...);
+        EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
+        free(buf);
+    }
+
+    /// Equivalent to JS alert
+    static void alert(const char *str) {
+        EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, str);
+    }
 };
 
-/// Equivalent to console.log
-template <typename... Ts>
-void log(const char *fmt, Ts... ts) {
-    auto sz = snprintf(nullptr, 0, fmt, ts...);
-    auto buf = (char *)malloc(sz + 1);
-    auto ret = snprintf(buf, sz + 1, fmt, ts...);
-    EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, buf);
-    free(buf);
-}
+class Console final {
+  public:
+    explicit Console() = delete;
 
-/// Equivalent to JS alert
-template <typename... Ts>
-void alert(const char *fmt, Ts... ts) {
-    auto sz = snprintf(nullptr, 0, fmt, ts...);
-    auto buf = (char *)malloc(sz + 1);
-    auto ret = snprintf(buf, sz + 1, fmt, ts...);
-    EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
-    free(buf);
-}
+    /// Equivalent to console.log
+    template <typename... Ts>
+    static void log(const char *fmt, Ts... ts) {
+        auto sz = snprintf(nullptr, 0, fmt, ts...);
+        auto buf = (char *)malloc(sz + 1);
+        auto ret = snprintf(buf, sz + 1, fmt, ts...);
+        EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, buf);
+        free(buf);
+    }
+
+    /// Equivalent to console.log
+    static void log(const char *str) {
+        EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, str);
+    }
+
+    /// Equivalent to console.warn
+    template <typename... Ts>
+    static void warn(const char *fmt, Ts... ts) {
+        auto sz = snprintf(nullptr, 0, fmt, ts...);
+        auto buf = (char *)malloc(sz + 1);
+        auto ret = snprintf(buf, sz + 1, fmt, ts...);
+        EM_ASM_INT({ console.warn(Module.UTF8ToString($0)); }, buf);
+        free(buf);
+    }
+
+    /// Equivalent to console.warn
+    static void warn(const char *str) {
+        EM_ASM_INT({ console.warn(Module.UTF8ToString($0)); }, str);
+    }
+
+    /// Equivalent to console.error
+    template <typename... Ts>
+    static void error(const char *fmt, Ts... ts) {
+        auto sz = snprintf(nullptr, 0, fmt, ts...);
+        auto buf = (char *)malloc(sz + 1);
+        auto ret = snprintf(buf, sz + 1, fmt, ts...);
+        EM_ASM_INT({ console.error(Module.UTF8ToString($0)); }, buf);
+        free(buf);
+    }
+
+    /// Equivalent to console.error
+    static void error(const char *str) {
+        EM_ASM_INT({ console.error(Module.UTF8ToString($0)); }, str);
+    }
+
+    /// Equivalent to console.clear
+    static void clear() {
+        EM_ASM_INT({ console.clear(); });
+    }
+
+    /// Equivalent to console.group
+    static void group(const char *str) {
+        EM_ASM_INT({ console.group(Module.UTF8ToString($0)); }, str);
+    }
+};
 
 } // namespace livid
 
