@@ -1095,7 +1095,6 @@ class Document final {
         auto sz = snprintf(nullptr, 0, fmt, ts...);
         auto buf = (char *)malloc(sz + 1);
         auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        // EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
         std::string a = "alert(" + std::string(buf) + ");";
         emscripten_run_script(a.c_str());
         free(buf);
