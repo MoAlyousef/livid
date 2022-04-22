@@ -146,7 +146,7 @@ Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
 ```
-$ em++ -std=c++17 -O3 -Iinclude examples/counter.cpp -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall'] -s EVAL_CTORS=2 -o index.html --shell-file my_shell.html
+$ em++ -s WASM=1 -s EVAL_CTORS=2 --bind -std=c++17 -O3 -Iinclude examples/counter.cpp -o index.html --shell-file my_shell.html
 ```
 
 With CMake:
@@ -155,7 +155,7 @@ You need a CMakeLists.txt file with contents similar to:
 cmake_minimum_required(VERSION 3.15)
 project(cmake_livid_example)
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 -s EVAL_CTORS=2 -s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','ccall']")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 -s EVAL_CTORS=2 --bind")
 
 include(FetchContent)
 FetchContent_Declare(

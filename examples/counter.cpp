@@ -17,8 +17,9 @@ int main() {
     // We set the style color to green
     btn1.style(Style::Color, "green");
     // This signals that clicks call the inc function
-    btn1.handle(Event::Click, [&](){
+    btn1.handle(Event::Click, [&](auto v){
         count += 1;
+        Console::log("%d", count);
         auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(count));
     });
@@ -28,8 +29,9 @@ int main() {
     Widget<WidgetType::Button> btn2;
     btn2.text("Decrement!");
     btn2.style(Style::Color, "red");
-    btn2.handle(Event::Click, [&](){
+    btn2.handle(Event::Click, [&](auto){
         count -= 1;
+        Console::log("%d", count);
         auto result = Widget<WidgetType::Div>::from_id("result");
         result.text(std::to_string(count));
     });

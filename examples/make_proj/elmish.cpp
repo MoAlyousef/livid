@@ -10,9 +10,9 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void increment() { counter++; update(); }
+    static void increment(emscripten::val v) { counter++; update(); }
     
-    static void decrement() { counter--; update(); }
+    static void decrement(emscripten::val v) { counter--; update(); }
     
     static void update() { Div::from_id("result").text(std::to_string(counter)); }
     

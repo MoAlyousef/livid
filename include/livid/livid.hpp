@@ -28,16 +28,20 @@ SOFTWARE.
 #include <cstdio>
 #include <cstring>
 #include <emscripten.h>
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
 #include <functional>
 #include <map>
 #include <string>
 #include <vector>
 
 /// [INTERNAL]
-__attribute__((used)) extern "C" void __internal_livid_func__(void *data) {
-    std::function<void()> func = *static_cast<std::function<void()> *>(data);
-    func();
-}
+EMSCRIPTEN_BINDINGS(MyBindings)
+{
+    emscripten::class_<std::function<void(emscripten::val)>>("ListenerCallback")
+        .constructor<>()
+        .function("_internal_func_", &std::function<void(emscripten::val)>::operator());
+};
 
 namespace livid {
 
@@ -831,36 +835,14 @@ constexpr const char *get_style_str(Style s) {
 
 /// Holds the implementation of all widgets, not specific to WidgetType
 class WidgetBase {
-    static inline size_t val = 0;
-
-    std::map<Event, std::function<void()> *> cbs_{};
-
   protected:
-    std::string id_ = "";
+    emscripten::val v = emscripten::val::null();
 
-    WidgetBase() {
-        id_ = std::string("_livid_widget_") + std::to_string(val);
-        val += 1;
-    }
-
-    explicit WidgetBase(const std::string &id) : id_(id) {}
-
-    /// [INTERNAL]
-    WidgetBase &handle_(Event event, const char *name, void *data) {
-        auto ev = detail::get_event_str(event);
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .addEventListener(
-                        Module.UTF8ToString($1), function() {
-                            Module.ccall(Module.UTF8ToString($2), 'null', ['number'], [$3]);
-                        });
-            },
-            id_.c_str(), ev, name, data);
-        return *this;
-    }
+    WidgetBase() {}
 
   public:
+    WidgetBase(emscripten::val val): v(val) {}
+
     WidgetBase(const WidgetBase &other) = default;
 
     WidgetBase(WidgetBase &&other) = default;
@@ -871,231 +853,122 @@ class WidgetBase {
     }
 
     /// Construct a WidgetBase from an html id
-    static WidgetBase from_id(const std::string &id) { return WidgetBase(id); }
+    static WidgetBase from_id(const std::string &id) { 
+        auto doc = emscripten::val::global("document");
+        auto elem = doc.call<emscripten::val>("getElementById", emscripten::val(id.c_str()));
+        return WidgetBase(elem);
+    }
 
     /// Delete a widget
     static void delete_widget(WidgetBase &&elem) {
         elem.outer_html("");
-        for (auto cb: elem.cbs_) {
-            delete cb.second;
-        }
     }
 
     /// Get the Html id
-    std::string id() const { return id_; }
+    std::string id() const { return v["id"].as<std::string>(); }
 
     /// Set the Html id
     WidgetBase &id(const std::string &val) {
-        EM_ASM_INT({ document.getElementById(Module.UTF8ToString($0)).id = Module.UTF8ToString($1); },
-                id_.c_str(), val.c_str());
-        id_ = val;
+        v.set("id", val);
         return *this;
     }
 
     /// Set the Html attribute
     WidgetBase &attr(const std::string &attr, const std::string &val) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .setAttribute(Module.UTF8ToString($1), Module.UTF8ToString($2));
-            },
-            id_.c_str(), attr.c_str(), val.c_str());
+        v.call<void>("setAttribute", attr, val);
         return *this;
     }
 
     /// Get the Html attribute
     std::string attr(const std::string &attr) {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0))
-                                .getAttribute(Module.UTF8ToString($1));
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str(), attr.c_str());
-        return std::string(ptr);
+        return v.call<emscripten::val>("getAttribute", attr).as<std::string>();
     }
 
     /// Set the Html class
     WidgetBase &klass(const std::string &val) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .setAttribute('class', Module.UTF8ToString($1));
-            },
-            id_.c_str(), val.c_str());
+        v.set("className", val);
         return *this;
     }
 
     /// Get the Html class
     std::string klass() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).getAttribute('class');
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str());
-        return std::string(ptr);
+        return v["className"].as<std::string>();
     }
 
     /// Append a child
     WidgetBase &append(const WidgetBase &w) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .appendChild(document.getElementById(Module.UTF8ToString($1)));
-            },
-            id_.c_str(), w.id().c_str());
+        v.call<void>("appendChild", w.v);
         return *this;
     }
 
     /// Remove a child
     WidgetBase &remove(const WidgetBase &w) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0))
-                    .removeChild(document.getElementById(Module.UTF8ToString($1)));
-            },
-            id_.c_str(), w.id().c_str());
+        v.call<void>("removeChild", w.v);
         return *this;
     }
 
     /// Add an event listener
-    WidgetBase &handle(Event event, std::function<void()> &&func) {
-        auto cb_ = new std::function<void()>(func);
-        cbs_[event] = cb_;
-        handle_(event, "__internal_livid_func__", (void *)cbs_[event]);
+    WidgetBase &handle(Event event, std::function<void(emscripten::val)> &&func) {
+        emscripten::val cb = emscripten::val(func)["_internal_func_"].call<emscripten::val>("bind", emscripten::val(func));
+        v.call<void>("addEventListener", std::string(detail::get_event_str(event)), cb);
         return *this;
     }
 
     /// Set the text content
     WidgetBase &text(const std::string &html) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0)).textContent =
-                    Module.UTF8ToString($1);
-            },
-            id_.c_str(), html.c_str());
+        v.set("textContent", html);
         return *this;
     }
 
     /// Get the text content
     std::string text() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).textContent;
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str());
-        return std::string(ptr);
+        return v["textContent"].as<std::string>();
     }
 
     /// Set the outer html
     WidgetBase &outer_html(const std::string &html) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0)).outerHTML =
-                    Module.UTF8ToString($1);
-            },
-            id_.c_str(), html.c_str());
+        v.set("outerHTML", html);
         return *this;
     }
 
     /// Get the outer html
     std::string outer_html() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).outerHTML;
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str());
-        return std::string(ptr);
+        return v["outerHTML"].as<std::string>();
     }
 
     /// Set the inner html
     WidgetBase &inner_html(const std::string &html) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0)).innerHTML =
-                    Module.UTF8ToString($1);
-            },
-            id_.c_str(), html.c_str());
+        v.set("innerHTML", html);
         return *this;
     }
 
     /// Get the inner html
     std::string inner_html() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).innerHTML;
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str());
-        return std::string(ptr);
+        return v["innerHTML"].as<std::string>();
     }
 
     /// Set the href value
     WidgetBase &href(const std::string &html) {
-        EM_ASM_INT(
-            { document.getElementById(Module.UTF8ToString($0)).href = Module.UTF8ToString($1); },
-            id_.c_str(), html.c_str());
+        v.set("href", html);
         return *this;
     }
 
     /// Get the href value
     std::string href() {
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt = document.getElementById(Module.UTF8ToString($0)).href;
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str());
-        return std::string(ptr);
+        return v["href"].as<std::string>();
     }
 
     /// Set the style of the widget
     WidgetBase &style(Style style, const std::string &html) {
         auto s = detail::get_style_str(style);
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)] =
-                    Module.UTF8ToString($2);
-            },
-            id_.c_str(), s, html.c_str());
+        v["style"].set(s, html);
         return *this;
     }
 
     /// Get the style of the widget
     std::string style(Style style) {
         auto s = detail::get_style_str(style);
-        char *ptr = (char *)EM_ASM_INT(
-            {
-                const txt =
-                    document.getElementById(Module.UTF8ToString($0)).style[Module.UTF8ToString($1)];
-                const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                const ptr = Module._malloc(cnt);
-                Module.stringToUTF8(txt, ptr, cnt);
-                return ptr;
-            },
-            id_.c_str(), s);
-        return std::string(ptr);
+        return v["style"][s].as<std::string>();
     }
 };
 
@@ -1104,24 +977,17 @@ class Widget : public WidgetBase {
   public:
     Widget() : WidgetBase() {
         const char *element = detail::get_element_str(widget_type);
-        EM_ASM_INT(
-            {
-                const widget = document.createElement(Module.UTF8ToString($0));
-                widget.setAttribute('id', Module.UTF8ToString($1));
-                document.body.appendChild(widget);
-            },
-            element, id_.c_str());
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElement", emscripten::val(element));
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
 
-    explicit Widget(const std::string &id) : WidgetBase(id) {
+    explicit Widget(const std::string &id) : WidgetBase() {
         const char *element = detail::get_element_str(widget_type);
-        EM_ASM_INT(
-            {
-                const widget = document.createElement(Module.UTF8ToString($0));
-                widget.setAttribute('id', Module.UTF8ToString($1));
-                document.body.appendChild(widget);
-            },
-            element, id_.c_str());
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElement", emscripten::val(element));
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
+        v.set("id", id);
     }
 
     Widget(const Widget &other) = default;
@@ -1138,23 +1004,16 @@ template <>
 class Widget<WidgetType::Svg> : public WidgetBase {
   public:
     Widget() : WidgetBase() {
-        EM_ASM_INT(
-            {
-                const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                widget.setAttribute('id', Module.UTF8ToString($0));
-                document.body.appendChild(widget);
-            },
-            id_.c_str());
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElementNS", emscripten::val("http://www.w3.org/2000/svg"), emscripten::val("svg"));
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
 
-    explicit Widget(const std::string &id) : WidgetBase(id) {
-        EM_ASM_INT(
-            {
-                const widget = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                widget.setAttribute('id', Module.UTF8ToString($0));
-                document.body.appendChild(widget);
-            },
-            id_.c_str());
+    explicit Widget(const std::string &id) : WidgetBase() {
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElementNS", emscripten::val("http://www.w3.org/2000/svg"), emscripten::val("svg"));
+        v.set("id", id);
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
 
     Widget(const Widget &other) = default;
@@ -1169,26 +1028,17 @@ class Widget<WidgetType::Svg> : public WidgetBase {
 class NSWidget : public WidgetBase {
   public:
     explicit NSWidget(const std::string &ns, const std::string &tag, const std::string &id)
-        : WidgetBase(id) {
-        EM_ASM_INT(
-            {
-                const widget =
-                    document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
-                widget.setAttribute('id', Module.UTF8ToString($2));
-                document.body.appendChild(widget);
-            },
-            ns.c_str(), tag.c_str(), id_.c_str());
+        : WidgetBase() {
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElementNS", ns, tag);
+        v.set("id", id);
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
 
     explicit NSWidget(const std::string &ns, const std::string &tag) : WidgetBase() {
-        EM_ASM_INT(
-            {
-                const widget =
-                    document.createElementNS(Module.UTF8ToString($0), Module.UTF8ToString($1));
-                widget.setAttribute('id', Module.UTF8ToString($2));
-                document.body.appendChild(widget);
-            },
-            ns.c_str(), tag.c_str(), id_.c_str());
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElementNS", ns, tag);
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
 
     NSWidget(const NSWidget &other) = default;
@@ -1202,65 +1052,39 @@ class NSWidget : public WidgetBase {
 
     /// Set the Html attribute
     NSWidget &ns_attr(const std::string &ns, const std::string &attr, const std::string &val) {
-        EM_ASM_INT(
-            {
-                document.getElementById(Module.UTF8ToString($1))
-                    .setAttributeNS(Module.UTF8ToString($0), Module.UTF8ToString($2),
-                                    Module.UTF8ToString($3));
-            },
-            ns.c_str(), id_.c_str(), attr.c_str(), val.c_str());
+        v.call<void>("setAttributeNS", attr, val);
         return *this;
     }
 };
 
 class Document final {
+    static inline emscripten::val doc_ = emscripten::val::global("document");
   public:
     explicit Document() = delete;
 
     /// Set the title of the document
     static void title(const std::string &t) {
-        EM_ASM_INT({ document.title = Module.UTF8ToString($0); }, t.c_str());
+        doc_.set("title", t);
     }
 
     /// Get all elements of the specified html className
     static std::vector<WidgetBase> elems_by_class(const std::string &klass) {
+        auto elems = doc_.call<emscripten::val>("getElementsByClassName", klass);
+        auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
         std::vector<WidgetBase> v;
-        auto cnt =
-            EM_ASM_INT({ return document.getElementsByClassName(Module.UTF8ToString($0)).length; },
-                       klass.c_str());
-        for (int i = 0; i < cnt; i++) {
-            char *ptr = (char *)EM_ASM_INT(
-                {
-                    let x = document.getElementsByClassName(Module.UTF8ToString($0));
-                    const txt = x[$1].id;
-                    const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                    const ptr = Module._malloc(cnt);
-                    Module.stringToUTF8(txt, ptr, cnt);
-                    return ptr;
-                },
-                klass.c_str(), i);
-            v.push_back(WidgetBase::from_id(std::string(ptr)));
+        for (auto elem : elems1) {
+            v.push_back(WidgetBase(elem));
         }
         return v;
     }
 
     /// Get all elements of the specified html tagName
     static std::vector<WidgetBase> elems_by_tag(const std::string &tag) {
+        auto elems = doc_.call<emscripten::val>("getElementsByTagName", tag);
+        auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
         std::vector<WidgetBase> v;
-        auto cnt = EM_ASM_INT(
-            { return document.getElementsByTagName(Module.UTF8ToString($0)).length; }, tag.c_str());
-        for (int i = 0; i < cnt; i++) {
-            char *ptr = (char *)EM_ASM_INT(
-                {
-                    let x = document.getElementsByTagName(Module.UTF8ToString($0));
-                    const txt = x[$1].id;
-                    const cnt = (Module.lengthBytesUTF8(txt) + 1);
-                    const ptr = Module._malloc(cnt);
-                    Module.stringToUTF8(txt, ptr, cnt);
-                    return ptr;
-                },
-                tag.c_str(), i);
-            v.push_back(WidgetBase::from_id(std::string(ptr)));
+        for (auto elem : elems1) {
+            v.push_back(WidgetBase(elem));
         }
         return v;
     }
@@ -1271,17 +1095,21 @@ class Document final {
         auto sz = snprintf(nullptr, 0, fmt, ts...);
         auto buf = (char *)malloc(sz + 1);
         auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
+        // EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, buf);
+        std::string a = "alert(" + std::string(buf) + ");";
+        emscripten_run_script(a.c_str());
         free(buf);
     }
 
     /// Equivalent to JS alert
     static void alert(const char *str) {
-        EM_ASM_INT({ alert(Module.UTF8ToString($0)); }, str);
+        std::string a = "alert(" + std::string(str) + ");";
+        emscripten_run_script(a.c_str());
     }
 };
 
 class Console final {
+    static inline emscripten::val console_ = emscripten::val::global("console");
   public:
     explicit Console() = delete;
 
@@ -1291,13 +1119,18 @@ class Console final {
         auto sz = snprintf(nullptr, 0, fmt, ts...);
         auto buf = (char *)malloc(sz + 1);
         auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, buf);
+        console_.call<void>("log", std::string(buf));
         free(buf);
     }
 
     /// Equivalent to console.log
     static void log(const char *str) {
-        EM_ASM_INT({ console.log(Module.UTF8ToString($0)); }, str);
+        console_.call<void>("log", std::string(str));
+    }
+
+    /// Equivalent to console.log
+    static void log(emscripten::val v) {
+        console_.call<void>("log", v);
     }
 
     /// Equivalent to console.warn
@@ -1306,13 +1139,18 @@ class Console final {
         auto sz = snprintf(nullptr, 0, fmt, ts...);
         auto buf = (char *)malloc(sz + 1);
         auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        EM_ASM_INT({ console.warn(Module.UTF8ToString($0)); }, buf);
+        console_.call<void>("warn", std::string(buf));
         free(buf);
     }
 
     /// Equivalent to console.warn
     static void warn(const char *str) {
-        EM_ASM_INT({ console.warn(Module.UTF8ToString($0)); }, str);
+        console_.call<void>("warn", std::string(str));
+    }
+
+    /// Equivalent to console.warn
+    static void warn(emscripten::val v) {
+        console_.call<void>("warn", v);
     }
 
     /// Equivalent to console.error
@@ -1321,23 +1159,33 @@ class Console final {
         auto sz = snprintf(nullptr, 0, fmt, ts...);
         auto buf = (char *)malloc(sz + 1);
         auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        EM_ASM_INT({ console.error(Module.UTF8ToString($0)); }, buf);
+        console_.call<void>("error", std::string(buf));
         free(buf);
     }
 
     /// Equivalent to console.error
     static void error(const char *str) {
-        EM_ASM_INT({ console.error(Module.UTF8ToString($0)); }, str);
+        console_.call<void>("error", std::string(str));
+    }
+
+    /// Equivalent to console.error
+    static void error(emscripten::val v) {
+        console_.call<void>("error", v);
     }
 
     /// Equivalent to console.clear
     static void clear() {
-        EM_ASM_INT({ console.clear(); });
+        console_.call<void>("clear");
     }
 
     /// Equivalent to console.group
     static void group(const char *str) {
-        EM_ASM_INT({ console.group(Module.UTF8ToString($0)); }, str);
+        console_.call<void>("group", std::string(str));
+    }
+
+    /// Equivalent to console.group
+    static void group(emscripten::val v) {
+        console_.call<void>("group", v);
     }
 };
 
