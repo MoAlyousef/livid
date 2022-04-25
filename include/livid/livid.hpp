@@ -36,8 +36,7 @@ SOFTWARE.
 #include <vector>
 
 /// [INTERNAL]
-EMSCRIPTEN_BINDINGS(MyBindings)
-{
+EMSCRIPTEN_BINDINGS(MyBindings) {
     emscripten::class_<std::function<void(emscripten::val)>>("ListenerCallback")
         .constructor<>()
         .function("_internal_func_", &std::function<void(emscripten::val)>::operator());
@@ -841,7 +840,7 @@ class WidgetBase {
     WidgetBase() {}
 
   public:
-    WidgetBase(emscripten::val val): v(val) {}
+    WidgetBase(emscripten::val val) : v(val) {}
 
     WidgetBase(const WidgetBase &other) = default;
 
@@ -853,16 +852,14 @@ class WidgetBase {
     }
 
     /// Construct a WidgetBase from an html id
-    static WidgetBase from_id(const std::string &id) { 
+    static WidgetBase from_id(const std::string &id) {
         auto doc = emscripten::val::global("document");
         auto elem = doc.call<emscripten::val>("getElementById", emscripten::val(id.c_str()));
         return WidgetBase(elem);
     }
 
     /// Delete a widget
-    static void delete_widget(WidgetBase &&elem) {
-        elem.outer_html("");
-    }
+    static void delete_widget(WidgetBase &&elem) { elem.outer_html(""); }
 
     /// Get the Html id
     std::string id() const { return v["id"].as<std::string>(); }
@@ -891,9 +888,7 @@ class WidgetBase {
     }
 
     /// Get the Html class
-    std::string klass() {
-        return v["className"].as<std::string>();
-    }
+    std::string klass() { return v["className"].as<std::string>(); }
 
     /// Append a child
     WidgetBase &append(const WidgetBase &w) {
@@ -909,7 +904,8 @@ class WidgetBase {
 
     /// Add an event listener
     WidgetBase &handle(Event event, std::function<void(emscripten::val)> &&func) {
-        emscripten::val cb = emscripten::val(func)["_internal_func_"].call<emscripten::val>("bind", emscripten::val(func));
+        emscripten::val cb = emscripten::val(func)["_internal_func_"].call<emscripten::val>(
+            "bind", emscripten::val(func));
         v.call<void>("addEventListener", std::string(detail::get_event_str(event)), cb);
         return *this;
     }
@@ -921,9 +917,7 @@ class WidgetBase {
     }
 
     /// Get the text content
-    std::string text() {
-        return v["textContent"].as<std::string>();
-    }
+    std::string text() { return v["textContent"].as<std::string>(); }
 
     /// Set the outer html
     WidgetBase &outer_html(const std::string &html) {
@@ -932,9 +926,7 @@ class WidgetBase {
     }
 
     /// Get the outer html
-    std::string outer_html() {
-        return v["outerHTML"].as<std::string>();
-    }
+    std::string outer_html() { return v["outerHTML"].as<std::string>(); }
 
     /// Set the inner html
     WidgetBase &inner_html(const std::string &html) {
@@ -943,9 +935,7 @@ class WidgetBase {
     }
 
     /// Get the inner html
-    std::string inner_html() {
-        return v["innerHTML"].as<std::string>();
-    }
+    std::string inner_html() { return v["innerHTML"].as<std::string>(); }
 
     /// Set the href value
     WidgetBase &href(const std::string &html) {
@@ -954,9 +944,7 @@ class WidgetBase {
     }
 
     /// Get the href value
-    std::string href() {
-        return v["href"].as<std::string>();
-    }
+    std::string href() { return v["href"].as<std::string>(); }
 
     /// Set the style of the widget
     WidgetBase &style(Style style, const std::string &html) {
@@ -1011,7 +999,9 @@ class Widget<WidgetType::Svg> : public WidgetBase {
 
     explicit Widget(const std::string &id) : WidgetBase() {
         auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElementNS", emscripten::val("http://www.w3.org/2000/svg"), emscripten::val("svg"));
+        v = doc.call<emscripten::val>("createElementNS",
+                                      emscripten::val("http://www.w3.org/2000/svg"),
+                                      emscripten::val("svg"));
         v.set("id", id);
         doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
     }
@@ -1059,12 +1049,17 @@ class NSWidget : public WidgetBase {
 
 class Document final {
     static inline emscripten::val doc_ = emscripten::val::global("document");
+
   public:
     explicit Document() = delete;
 
     /// Set the title of the document
-    static void title(const std::string &t) {
-        doc_.set("title", t);
+    static void title(const std::string &t) { doc_.set("title", t); }
+
+    static void add_css_link(const std::string &t) {
+        auto link = std::string("<link rel='stylesheet' href='") + t + "'/>";
+        auto head = doc_.call<emscripten::val>("getElementsByTagName", std::string("head"))[0];
+        head.call<void>("insertAdjacentHTML", std::string("beforeend"), link);
     }
 
     /// Get all elements of the specified html className
@@ -1109,6 +1104,7 @@ class Document final {
 
 class Console final {
     static inline emscripten::val console_ = emscripten::val::global("console");
+
   public:
     explicit Console() = delete;
 
@@ -1123,14 +1119,10 @@ class Console final {
     }
 
     /// Equivalent to console.log
-    static void log(const char *str) {
-        console_.call<void>("log", std::string(str));
-    }
+    static void log(const char *str) { console_.call<void>("log", std::string(str)); }
 
     /// Equivalent to console.log
-    static void log(emscripten::val v) {
-        console_.call<void>("log", v);
-    }
+    static void log(emscripten::val v) { console_.call<void>("log", v); }
 
     /// Equivalent to console.warn
     template <typename... Ts>
@@ -1143,14 +1135,10 @@ class Console final {
     }
 
     /// Equivalent to console.warn
-    static void warn(const char *str) {
-        console_.call<void>("warn", std::string(str));
-    }
+    static void warn(const char *str) { console_.call<void>("warn", std::string(str)); }
 
     /// Equivalent to console.warn
-    static void warn(emscripten::val v) {
-        console_.call<void>("warn", v);
-    }
+    static void warn(emscripten::val v) { console_.call<void>("warn", v); }
 
     /// Equivalent to console.error
     template <typename... Ts>
@@ -1163,29 +1151,19 @@ class Console final {
     }
 
     /// Equivalent to console.error
-    static void error(const char *str) {
-        console_.call<void>("error", std::string(str));
-    }
+    static void error(const char *str) { console_.call<void>("error", std::string(str)); }
 
     /// Equivalent to console.error
-    static void error(emscripten::val v) {
-        console_.call<void>("error", v);
-    }
+    static void error(emscripten::val v) { console_.call<void>("error", v); }
 
     /// Equivalent to console.clear
-    static void clear() {
-        console_.call<void>("clear");
-    }
+    static void clear() { console_.call<void>("clear"); }
 
     /// Equivalent to console.group
-    static void group(const char *str) {
-        console_.call<void>("group", std::string(str));
-    }
+    static void group(const char *str) { console_.call<void>("group", std::string(str)); }
 
     /// Equivalent to console.group
-    static void group(emscripten::val v) {
-        console_.call<void>("group", v);
-    }
+    static void group(emscripten::val v) { console_.call<void>("group", v); }
 };
 
 } // namespace livid
