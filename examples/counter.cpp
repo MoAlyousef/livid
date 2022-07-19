@@ -9,15 +9,15 @@ int main() {
     // This sets the document title
     Document::title("Hello");
 
-    Widget<WidgetType::Div> div;
+    Widget div(WidgetType::Div);
 
-    Widget<WidgetType::Div> result;
+    Widget result(WidgetType::Div);
     // We set the id to conveniently access the widget by id in the callback
     result.id("result");
     result.text("0");
     result.style(Style::FontSize, "22px");
 
-    Widget<WidgetType::Button> btn1;
+    Widget btn1(WidgetType::Button);
     // This sets the textContent element property
     btn1.text("Increment!");
     // We set the style color to green
@@ -26,13 +26,13 @@ int main() {
     btn1.handle(Event::Click, [&](auto) {
         count += 1;
         Console::log("%d", count);
-        auto result = Widget<WidgetType::Div>::from_id("result");
+        auto result = Widget::from_id("result");
         result.text(std::to_string(count));
     });
     // widgets are automatically appended to body, here we want to append to the div
     div.append(btn1);
 
-    Widget<WidgetType::Button> btn2;
+    Widget btn2(WidgetType::Button);
     btn2.text("Decrement!");
     btn2.style(Style::Color, "red");
     btn2.handle(Event::Click, [&, result](auto) mutable {

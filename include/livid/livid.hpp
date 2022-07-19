@@ -833,45 +833,71 @@ constexpr const char *get_style_str(Style s) {
 } // namespace detail
 
 /// Holds the implementation of all widgets, not specific to WidgetType
-class WidgetBase {
+class Widget {
   protected:
     emscripten::val v = emscripten::val::null();
 
-    WidgetBase() {}
+    Widget() {}
 
   public:
-    WidgetBase(emscripten::val val) : v(val) {}
+    Widget(emscripten::val val) : v(val) {}
 
-    WidgetBase(const WidgetBase &other) = default;
+    Widget(const Widget &other) = default;
 
-    WidgetBase(WidgetBase &&other) = default;
+    Widget(Widget &&other) = default;
 
-    WidgetBase &operator=(const WidgetBase &other) {
+    Widget &operator=(const Widget &other) {
         *this = other;
         return *this;
     }
 
-    /// Construct a WidgetBase from an html id
-    static WidgetBase from_id(const std::string &id) {
+    /// Creates a Widget from a WidgetType
+    Widget(const WidgetType typ) {
+        if (typ == WidgetType::Svg) {
+            auto doc = emscripten::val::global("document");
+            v = doc.call<emscripten::val>("createElementNS",
+                                          emscripten::val("http://www.w3.org/2000/svg"),
+                                          emscripten::val("svg"));
+            doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0]
+                .call<void>("appendChild", v);
+        } else {
+            const char *element = detail::get_element_str(typ);
+            auto doc = emscripten::val::global("document");
+            v = doc.call<emscripten::val>("createElement", emscripten::val(element));
+            doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0]
+                .call<void>("appendChild", v);
+        }
+    }
+
+    /// Creates a namespaced element, calls `createElementNS`
+    Widget(const std::string &name_space, const std::string &tag) : Widget() {
+        auto doc = emscripten::val::global("document");
+        v = doc.call<emscripten::val>("createElementNS", name_space, tag);
+        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>(
+            "appendChild", v);
+    }
+
+    /// Construct a Widget from an html id
+    static Widget from_id(const std::string &id) {
         auto doc = emscripten::val::global("document");
         auto elem = doc.call<emscripten::val>("getElementById", emscripten::val(id.c_str()));
-        return WidgetBase(elem);
+        return Widget(elem);
     }
 
     /// Delete a widget
-    static void delete_widget(WidgetBase &&elem) { elem.outer_html(""); }
+    static void delete_widget(Widget &&elem) { elem.outer_html(""); }
 
     /// Get the Html id
     std::string id() const { return v["id"].as<std::string>(); }
 
     /// Set the Html id
-    WidgetBase &id(const std::string &val) {
+    Widget &id(const std::string &val) {
         v.set("id", val);
         return *this;
     }
 
     /// Set the Html attribute
-    WidgetBase &attr(const std::string &attr, const std::string &val) {
+    Widget &attr(const std::string &attr, const std::string &val) {
         v.call<void>("setAttribute", attr, val);
         return *this;
     }
@@ -882,7 +908,7 @@ class WidgetBase {
     }
 
     /// Set the Html class
-    WidgetBase &klass(const std::string &val) {
+    Widget &klass(const std::string &val) {
         v.set("className", val);
         return *this;
     }
@@ -891,19 +917,19 @@ class WidgetBase {
     std::string klass() { return v["className"].as<std::string>(); }
 
     /// Append a child
-    WidgetBase &append(const WidgetBase &w) {
+    Widget &append(const Widget &w) {
         v.call<void>("appendChild", w.v);
         return *this;
     }
 
     /// Remove a child
-    WidgetBase &remove(const WidgetBase &w) {
+    Widget &remove(const Widget &w) {
         v.call<void>("removeChild", w.v);
         return *this;
     }
 
     /// Add an event listener
-    WidgetBase &handle(Event event, std::function<void(emscripten::val)> &&func) {
+    Widget &handle(Event event, std::function<void(emscripten::val)> &&func) {
         emscripten::val cb = emscripten::val(func)["_internal_func_"].call<emscripten::val>(
             "bind", emscripten::val(func));
         v.call<void>("addEventListener", std::string(detail::get_event_str(event)), cb);
@@ -911,7 +937,7 @@ class WidgetBase {
     }
 
     /// Set the text content
-    WidgetBase &text(const std::string &html) {
+    Widget &text(const std::string &html) {
         v.set("textContent", html);
         return *this;
     }
@@ -920,7 +946,7 @@ class WidgetBase {
     std::string text() { return v["textContent"].as<std::string>(); }
 
     /// Set the outer html
-    WidgetBase &outer_html(const std::string &html) {
+    Widget &outer_html(const std::string &html) {
         v.set("outerHTML", html);
         return *this;
     }
@@ -929,7 +955,7 @@ class WidgetBase {
     std::string outer_html() { return v["outerHTML"].as<std::string>(); }
 
     /// Set the inner html
-    WidgetBase &inner_html(const std::string &html) {
+    Widget &inner_html(const std::string &html) {
         v.set("innerHTML", html);
         return *this;
     }
@@ -938,7 +964,7 @@ class WidgetBase {
     std::string inner_html() { return v["innerHTML"].as<std::string>(); }
 
     /// Set the href value
-    WidgetBase &href(const std::string &html) {
+    Widget &href(const std::string &html) {
         v.set("href", html);
         return *this;
     }
@@ -947,7 +973,7 @@ class WidgetBase {
     std::string href() { return v["href"].as<std::string>(); }
 
     /// Set the style of the widget
-    WidgetBase &style(Style style, const std::string &html) {
+    Widget &style(Style style, const std::string &html) {
         auto s = detail::get_style_str(style);
         v["style"].set(s, html);
         return *this;
@@ -958,90 +984,9 @@ class WidgetBase {
         auto s = detail::get_style_str(style);
         return v["style"][s].as<std::string>();
     }
-};
-
-template <WidgetType widget_type>
-class Widget : public WidgetBase {
-  public:
-    Widget() : WidgetBase() {
-        const char *element = detail::get_element_str(widget_type);
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElement", emscripten::val(element));
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-    }
-
-    explicit Widget(const std::string &id) : WidgetBase() {
-        const char *element = detail::get_element_str(widget_type);
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElement", emscripten::val(element));
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-        v.set("id", id);
-    }
-
-    Widget(const Widget &other) = default;
-
-    Widget(Widget &&other) = default;
-
-    Widget &operator=(const Widget &other) {
-        *this = other;
-        return *this;
-    }
-};
-
-template <>
-class Widget<WidgetType::Svg> : public WidgetBase {
-  public:
-    Widget() : WidgetBase() {
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElementNS", emscripten::val("http://www.w3.org/2000/svg"), emscripten::val("svg"));
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-    }
-
-    explicit Widget(const std::string &id) : WidgetBase() {
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElementNS",
-                                      emscripten::val("http://www.w3.org/2000/svg"),
-                                      emscripten::val("svg"));
-        v.set("id", id);
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-    }
-
-    Widget(const Widget &other) = default;
-    Widget(Widget &&other) = default;
-    Widget &operator=(const Widget &other) {
-        *this = other;
-        return *this;
-    }
-};
-
-/// A namespaced widget, like svg
-class NSWidget : public WidgetBase {
-  public:
-    explicit NSWidget(const std::string &ns, const std::string &tag, const std::string &id)
-        : WidgetBase() {
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElementNS", ns, tag);
-        v.set("id", id);
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-    }
-
-    explicit NSWidget(const std::string &ns, const std::string &tag) : WidgetBase() {
-        auto doc = emscripten::val::global("document");
-        v = doc.call<emscripten::val>("createElementNS", ns, tag);
-        doc.call<emscripten::val>("getElementsByTagName", emscripten::val("body"))[0].call<void>("appendChild", v);
-    }
-
-    NSWidget(const NSWidget &other) = default;
-
-    NSWidget(NSWidget &&other) = default;
-
-    NSWidget &operator=(const NSWidget &other) {
-        *this = other;
-        return *this;
-    }
 
     /// Set the Html attribute
-    NSWidget &ns_attr(const std::string &ns, const std::string &attr, const std::string &val) {
+    Widget &ns_attr(const std::string &ns, const std::string &attr, const std::string &val) {
         v.call<void>("setAttributeNS", attr, val);
         return *this;
     }
@@ -1063,23 +1008,23 @@ class Document final {
     }
 
     /// Get all elements of the specified html className
-    static std::vector<WidgetBase> elems_by_class(const std::string &klass) {
+    static std::vector<Widget> elems_by_class(const std::string &klass) {
         auto elems = doc_.call<emscripten::val>("getElementsByClassName", klass);
         auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
-        std::vector<WidgetBase> v;
+        std::vector<Widget> v;
         for (auto elem : elems1) {
-            v.push_back(WidgetBase(elem));
+            v.push_back(Widget(elem));
         }
         return v;
     }
 
     /// Get all elements of the specified html tagName
-    static std::vector<WidgetBase> elems_by_tag(const std::string &tag) {
+    static std::vector<Widget> elems_by_tag(const std::string &tag) {
         auto elems = doc_.call<emscripten::val>("getElementsByTagName", tag);
         auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
-        std::vector<WidgetBase> v;
+        std::vector<Widget> v;
         for (auto elem : elems1) {
-            v.push_back(WidgetBase(elem));
+            v.push_back(Widget(elem));
         }
         return v;
     }
@@ -1165,6 +1110,113 @@ class Console final {
     /// Equivalent to console.group
     static void group(emscripten::val v) { console_.call<void>("group", v); }
 };
+
+static inline Widget Address() { return Widget(WidgetType::Address); }
+static inline Widget Article() { return Widget(WidgetType::Article); }
+static inline Widget Aside() { return Widget(WidgetType::Aside); }
+static inline Widget Footer() { return Widget(WidgetType::Footer); }
+static inline Widget Header() { return Widget(WidgetType::Header); }
+static inline Widget H1() { return Widget(WidgetType::H1); }
+static inline Widget H2() { return Widget(WidgetType::H2); }
+static inline Widget H3() { return Widget(WidgetType::H3); }
+static inline Widget H4() { return Widget(WidgetType::H4); }
+static inline Widget H5() { return Widget(WidgetType::H5); }
+static inline Widget H6() { return Widget(WidgetType::H6); }
+static inline Widget Main() { return Widget(WidgetType::Main); }
+static inline Widget Nav() { return Widget(WidgetType::Nav); }
+static inline Widget Section() { return Widget(WidgetType::Section); }
+static inline Widget Blockquote() { return Widget(WidgetType::Blockquote); }
+static inline Widget Dd() { return Widget(WidgetType::Dd); }
+static inline Widget Div() { return Widget(WidgetType::Div); }
+static inline Widget Dl() { return Widget(WidgetType::Dl); }
+static inline Widget Dt() { return Widget(WidgetType::Dt); }
+static inline Widget Figcaption() { return Widget(WidgetType::Figcaption); }
+static inline Widget Figure() { return Widget(WidgetType::Figure); }
+static inline Widget Hr() { return Widget(WidgetType::Hr); }
+static inline Widget Li() { return Widget(WidgetType::Li); }
+static inline Widget Ol() { return Widget(WidgetType::Ol); }
+static inline Widget P() { return Widget(WidgetType::P); }
+static inline Widget Pre() { return Widget(WidgetType::Pre); }
+static inline Widget Ul() { return Widget(WidgetType::Ul); }
+static inline Widget A() { return Widget(WidgetType::A); }
+static inline Widget Abbr() { return Widget(WidgetType::Abbr); }
+static inline Widget B() { return Widget(WidgetType::B); }
+static inline Widget Bdi() { return Widget(WidgetType::Bdi); }
+static inline Widget Bdo() { return Widget(WidgetType::Bdo); }
+static inline Widget Br() { return Widget(WidgetType::Br); }
+static inline Widget Cite() { return Widget(WidgetType::Cite); }
+static inline Widget Code() { return Widget(WidgetType::Code); }
+static inline Widget Data() { return Widget(WidgetType::Data); }
+static inline Widget Dfn() { return Widget(WidgetType::Dfn); }
+static inline Widget Em() { return Widget(WidgetType::Em); }
+static inline Widget I() { return Widget(WidgetType::I); }
+static inline Widget Kbd() { return Widget(WidgetType::Kbd); }
+static inline Widget Mark() { return Widget(WidgetType::Mark); }
+static inline Widget Q() { return Widget(WidgetType::Q); }
+static inline Widget Rp() { return Widget(WidgetType::Rp); }
+static inline Widget Rt() { return Widget(WidgetType::Rt); }
+static inline Widget Ruby() { return Widget(WidgetType::Ruby); }
+static inline Widget S() { return Widget(WidgetType::S); }
+static inline Widget Samp() { return Widget(WidgetType::Samp); }
+static inline Widget Small() { return Widget(WidgetType::Small); }
+static inline Widget Span() { return Widget(WidgetType::Span); }
+static inline Widget Strong() { return Widget(WidgetType::Strong); }
+static inline Widget Sub() { return Widget(WidgetType::Sub); }
+static inline Widget Sup() { return Widget(WidgetType::Sup); }
+static inline Widget Time() { return Widget(WidgetType::Time); }
+static inline Widget U() { return Widget(WidgetType::U); }
+static inline Widget Var() { return Widget(WidgetType::Var); }
+static inline Widget Wbr() { return Widget(WidgetType::Wbr); }
+static inline Widget Area() { return Widget(WidgetType::Area); }
+static inline Widget Audio() { return Widget(WidgetType::Audio); }
+static inline Widget Img() { return Widget(WidgetType::Img); }
+static inline Widget Map() { return Widget(WidgetType::Map); }
+static inline Widget Track() { return Widget(WidgetType::Track); }
+static inline Widget Video() { return Widget(WidgetType::Video); }
+static inline Widget Embed() { return Widget(WidgetType::Embed); }
+static inline Widget Iframe() { return Widget(WidgetType::Iframe); }
+static inline Widget Object() { return Widget(WidgetType::Object); }
+static inline Widget Param() { return Widget(WidgetType::Param); }
+static inline Widget Picture() { return Widget(WidgetType::Picture); }
+static inline Widget Portal() { return Widget(WidgetType::Portal); }
+static inline Widget Source() { return Widget(WidgetType::Source); }
+static inline Widget Svg() { return Widget(WidgetType::Svg); }
+static inline Widget Math() { return Widget(WidgetType::Math); }
+static inline Widget Canvas() { return Widget(WidgetType::Canvas); }
+static inline Widget Noscript() { return Widget(WidgetType::Noscript); }
+static inline Widget Script() { return Widget(WidgetType::Script); }
+static inline Widget Del() { return Widget(WidgetType::Del); }
+static inline Widget Ins() { return Widget(WidgetType::Ins); }
+static inline Widget Caption() { return Widget(WidgetType::Caption); }
+static inline Widget Col() { return Widget(WidgetType::Col); }
+static inline Widget Colgroup() { return Widget(WidgetType::Colgroup); }
+static inline Widget Table() { return Widget(WidgetType::Table); }
+static inline Widget Tbody() { return Widget(WidgetType::Tbody); }
+static inline Widget Td() { return Widget(WidgetType::Td); }
+static inline Widget Tfoot() { return Widget(WidgetType::Tfoot); }
+static inline Widget Th() { return Widget(WidgetType::Th); }
+static inline Widget Thead() { return Widget(WidgetType::Thead); }
+static inline Widget Tr() { return Widget(WidgetType::Tr); }
+static inline Widget Button() { return Widget(WidgetType::Button); }
+static inline Widget Datalist() { return Widget(WidgetType::Datalist); }
+static inline Widget Fieldset() { return Widget(WidgetType::Fieldset); }
+static inline Widget Form() { return Widget(WidgetType::Form); }
+static inline Widget Input() { return Widget(WidgetType::Input); }
+static inline Widget Label() { return Widget(WidgetType::Label); }
+static inline Widget Legend() { return Widget(WidgetType::Legend); }
+static inline Widget Meter() { return Widget(WidgetType::Meter); }
+static inline Widget Optgroup() { return Widget(WidgetType::Optgroup); }
+static inline Widget Option() { return Widget(WidgetType::Option); }
+static inline Widget Output() { return Widget(WidgetType::Output); }
+static inline Widget Progress() { return Widget(WidgetType::Progress); }
+static inline Widget Select() { return Widget(WidgetType::Select); }
+static inline Widget Textarea() { return Widget(WidgetType::Textarea); }
+static inline Widget Details() { return Widget(WidgetType::Details); }
+static inline Widget Dialog() { return Widget(WidgetType::Dialog); }
+static inline Widget Menu() { return Widget(WidgetType::Menu); }
+static inline Widget Summary() { return Widget(WidgetType::Summary); }
+static inline Widget Slot() { return Widget(WidgetType::Slot); }
+static inline Widget Template() { return Widget(WidgetType::Template); }
 
 } // namespace livid
 

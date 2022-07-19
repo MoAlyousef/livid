@@ -3,9 +3,6 @@
 
 using namespace livid;
 
-using Div = Widget<WidgetType::Div>;
-using Button = Widget<WidgetType::Button>;
-
 class AppState {
     static inline int counter = 0;
 
@@ -14,7 +11,7 @@ class AppState {
     
     static void decrement(emscripten::val) { counter--; update(); }
     
-    static void update() { Div::from_id("result").text(std::to_string(counter)); }
+    static void update() { Widget::from_id("result").text(std::to_string(counter)); }
     
     static void view() {
         Div()

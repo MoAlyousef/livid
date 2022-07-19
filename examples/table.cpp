@@ -4,22 +4,17 @@
 
 using namespace livid;
 
-using Table = Widget<WidgetType::Table>;
-using Tbody = Widget<WidgetType::Tbody>;
-using Tr = Widget<WidgetType::Tr>; // table row
-using Td = Widget<WidgetType::Td>; // table cell
-
-Table create_table(const std::vector<std::vector<int>> &data) {
-    Table t;
+Widget create_table(const std::vector<std::vector<int>> &data) {
+    auto t = Table();
     t.attr("border", "1");
-    Tbody tb;
+    auto tb = Tbody();
     t.append(tb);
     for (int i = 0; i < data.size(); i++) {
-        Tr tr;
+        auto tr = Tr();
         tb.append(tr);
 
         for (int j = 0; j < data[i].size(); j++) {
-            Td td;
+            auto td = Td();
             td.attr("width", "100");
             td.text(std::to_string(data[i][j]));
             tr.append(td);

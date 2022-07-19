@@ -4,14 +4,14 @@
 using namespace livid;
 
 int main() {
-    Widget<WidgetType::Svg> svg; // or NSWidget svg("http://www.w3.org/2000/svg", "svg");
+    Widget svg(WidgetType::Svg); // or NSWidget svg("http://www.w3.org/2000/svg", "svg");
     svg.attr("viewBox", "0 0 300 300");
     svg.attr("width", "300");
     svg.attr("height", "300");
     svg.style(Style::Display, "block");
 
     // NSWidget is a namespaced widget
-    NSWidget circle("http://www.w3.org/2000/svg", "circle");
+    Widget circle("http://www.w3.org/2000/svg", "circle");
     circle.attr("cx", "50");
     circle.attr("cy", "50");
     circle.attr("r", "40");
@@ -28,14 +28,12 @@ int main() {
 
 // or
 /*
-using Svg = Widget<WidgetType::Svg>;
-
-Svg()
+    Svg()
     .attr("viewBox", "0 0 300 300")
     .attr("width", "300")
     .attr("height", "300")
     .style(Style::Display, "block")
-    .append(NSWidget("http://www.w3.org/2000/svg", "circle")
+    .append(Widget("http://www.w3.org/2000/svg", "circle")
                 .attr("cx", "50")
                 .attr("cy", "50")
                 .attr("r", "40")
@@ -45,11 +43,9 @@ Svg()
 
 // or
 /*
-using Div = Widget<WidgetType::Div>;
-
-Div().outer_html(R"lit(
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="50"/>
-</svg>    
-)lit"); // this replaces the div with the svg image
+  Div().outer_html(R"lit(
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="50"/>
+  </svg>    
+  )lit"); // this replaces the div with the svg image
 */

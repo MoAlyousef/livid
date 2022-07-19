@@ -25,15 +25,15 @@ int main() {
     // This sets the document title
     Document::title("Hello");
 
-    Widget<WidgetType::Div> div;
+    Widget div(WidgetType::Div);
 
-    Widget<WidgetType::Div> result;
+    Widget result(WidgetType::Div);
     // We set the id to conveniently access the widget by id in the callback
     result.id("result");
     result.text("0");
     result.style(Style::FontSize, "22px");
 
-    Widget<WidgetType::Button> btn1;
+    Widget btn1(WidgetType::Button);
     // This sets the textContent element property
     btn1.text("Increment!");
     // We set the style color to green
@@ -42,13 +42,13 @@ int main() {
     btn1.handle(Event::Click, [&](auto) {
         count += 1;
         Console::log("%d", count);
-        auto result = Widget<WidgetType::Div>::from_id("result");
+        auto result = Widget::from_id("result");
         result.text(std::to_string(count));
     });
     // widgets are automatically appended to body, here we want to append to the div
     div.append(btn1);
 
-    Widget<WidgetType::Button> btn2;
+    Widget btn2(WidgetType::Button);
     btn2.text("Decrement!");
     btn2.style(Style::Color, "red");
     btn2.handle(Event::Click, [&, result](auto) mutable {
@@ -72,12 +72,6 @@ You can also use a builder pattern:
 #include <string>
 
 using namespace livid;
-
-using Div = Widget<WidgetType::Div>;
-using Form = Widget<WidgetType::Form>;
-using Label = Widget<WidgetType::Label>;
-using Input = Widget<WidgetType::Input>;
-using Button = Widget<WidgetType::Button>;
 
 int main() {
     Form().klass("box").append(
@@ -116,9 +110,6 @@ You can also use an elmish architecture for your application:
 
 using namespace livid;
 
-using Div = Widget<WidgetType::Div>;
-using Button = Widget<WidgetType::Button>;
-
 class AppState {
     static inline int counter = 0;
 
@@ -127,7 +118,7 @@ class AppState {
     
     static void decrement(emscripten::val) { counter--; update(); }
     
-    static void update() { Div::from_id("result").text(std::to_string(counter)); }
+    static void update() { Widget::from_id("result").text(std::to_string(counter)); }
     
     static void view() {
         Div()

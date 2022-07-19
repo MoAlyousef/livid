@@ -2,12 +2,9 @@
 
 using namespace livid;
 
-using Ul = Widget<WidgetType::Ul>;
-using Li = Widget<WidgetType::Li>;
-
 template<class ...Ts>
 void create_unordered_list(Ts... args) {
-    Ul ul;
+    auto ul = Ul();
     for (const auto &arg : {args...}) {
         ul.append(Li().text(arg));
     }

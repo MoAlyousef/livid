@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-set(LIVID_PROJECT_VERSION 0.1.4)
+set(LIVID_PROJECT_VERSION 0.2.0)
 project(livid VERSION ${LIVID_PROJECT_VERSION})
 
 add_library(livid INTERFACE)

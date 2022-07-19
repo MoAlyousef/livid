@@ -3,12 +3,6 @@
 
 using namespace livid;
 
-using Div = Widget<WidgetType::Div>;
-using Form = Widget<WidgetType::Form>;
-using Label = Widget<WidgetType::Label>;
-using Input = Widget<WidgetType::Input>;
-using Button = Widget<WidgetType::Button>;
-
 int main() {
     Form().klass("box").append(
         Div()
