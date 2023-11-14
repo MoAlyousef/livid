@@ -4,7 +4,8 @@
 using namespace livid;
 
 int main() {
-    Widget svg(WidgetType::Svg); // or NSWidget svg("http://www.w3.org/2000/svg", "svg");
+    Widget svg(WidgetType::Svg); // or NSWidget
+                                 // svg("http://www.w3.org/2000/svg", "svg");
     svg.attr("viewBox", "0 0 300 300");
     svg.attr("width", "300");
     svg.attr("height", "300");
@@ -22,7 +23,8 @@ int main() {
 
     // // Or
     // svg.inner_html(R"lit(
-    //     <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"></circle>
+    //     <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3"
+    //     fill="red"></circle>
     // )lit");
 }
 
@@ -46,6 +48,6 @@ int main() {
   Div().outer_html(R"lit(
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="50" r="50"/>
-  </svg>    
+  </svg>
   )lit"); // this replaces the div with the svg image
 */

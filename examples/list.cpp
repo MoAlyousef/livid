@@ -2,7 +2,7 @@
 
 using namespace livid;
 
-template<class ...Ts>
+template <class... Ts>
 void create_unordered_list(Ts... args) {
     auto ul = Ul();
     for (const auto &arg : {args...}) {
@@ -10,7 +10,8 @@ void create_unordered_list(Ts... args) {
     }
 }
 
-int main() { 
-    Document::add_css_link("https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css");
-    create_unordered_list("Item1", "Item2", "Item3"); 
+int main() {
+    Document::add_css_link(
+        "https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css");
+    create_unordered_list("Item1", "Item2", "Item3");
 }

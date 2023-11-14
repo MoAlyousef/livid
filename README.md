@@ -37,7 +37,8 @@ int main() {
         auto result = Widget::from_id("result");
         result.text(std::to_string(count));
     });
-    // widgets are automatically appended to body, here we want to append to the div
+    // widgets are automatically appended to body, here we want to append to the
+    // div
     div.append(btn1);
 
     Widget btn2(WidgetType::Button);
@@ -67,29 +68,24 @@ using namespace livid;
 
 int main() {
     Form().klass("box").append(
-        Div().klass("field") // the class attribute is used by many css libs for styling elements of the same class
+        Div()
+            .klass("field") // the class attribute is used by many css libs for
+                            // styling elements of the same class
             .append(Label().klass("label").text("Email"))
-            .append(
-                Div().klass("control").append(
-                    Input()
-                        .klass("input")
-                        .attr("type", "email")
-                        .attr("placeholder", "m@gmail.com")
-                    )
-                )
-            .append(
-                Div().klass("field").append(
-                    Label().klass("label").text("Password")).append(
-                        Div().klass("control").append(
+            .append(Div().klass("control").append(
+                Input()
+                    .klass("input")
+                    .attr("type", "email")
+                    .attr("placeholder", "m@gmail.com")))
+            .append(Div()
+                        .klass("field")
+                        .append(Label().klass("label").text("Password"))
+                        .append(Div().klass("control").append(
                             Input()
                                 .klass("input")
                                 .attr("type", "password")
-                                .attr("placeholder", "*******")
-                        )
-                    )
-                )
-            .append(Button().klass("button is-primary").text("Sign in"))
-    );
+                                .attr("placeholder", "*******"))))
+            .append(Button().klass("button is-primary").text("Sign in")));
 }
 ```
 This uses Bulma for css styling.
@@ -106,12 +102,20 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void increment(emscripten::val) { counter++; update(); }
-    
-    static void decrement(emscripten::val) { counter--; update(); }
-    
-    static void update() { Widget::from_id("result").text(std::to_string(counter)); }
-    
+    static void increment(emscripten::val) {
+        counter++;
+        update();
+    }
+
+    static void decrement(emscripten::val) {
+        counter--;
+        update();
+    }
+
+    static void update() {
+        Widget::from_id("result").text(std::to_string(counter));
+    }
+
     static void view() {
         Div()
             .append(Button().text("+").handle(Event::Click, increment))
@@ -151,11 +155,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(LIVID)
 
 add_executable(index main.cpp)
-set_target_properties(index PROPERTIES SUFFIX .html)
 target_compile_features(index PRIVATE cxx_std_17)
-target_link_options(index PRIVATE --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html)
+set_target_properties(index PROPERTIES SUFFIX .html LINK_FLAGS "-s WASM=1 -s EVAL_CTORS=2 --bind --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
 target_link_libraries(index PRIVATE livid::livid)
 ```
+
 Then configure with `emcmake cmake -Bbin -DCMAKE_BUILD_TYPE=Release`, and build with `cmake --build bin`.
 
 There's also a Makefile in the examples directory (under make_proj) if you prefer to use make.

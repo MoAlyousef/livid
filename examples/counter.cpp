@@ -29,7 +29,8 @@ int main() {
         auto result = Widget::from_id("result");
         result.text(std::to_string(count));
     });
-    // widgets are automatically appended to body, here we want to append to the div
+    // widgets are automatically appended to body, here we want to append to the
+    // div
     div.append(btn1);
 
     Widget btn2(WidgetType::Button);
