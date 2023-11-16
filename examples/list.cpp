@@ -12,6 +12,6 @@ void create_unordered_list(Ts... args) {
 
 int main() {
     Document::add_css_link(
-        "https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css");
+        "https://classless.de/classless.css");
     create_unordered_list("Item1", "Item2", "Item3");
 }

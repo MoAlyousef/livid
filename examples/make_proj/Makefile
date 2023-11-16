@@ -6,7 +6,7 @@ LIVID_DIR = ../..
 SOURCES = elmish.cpp
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 CPPFLAGS = -I$(LIVID_DIR)/include
-LDFLAGS = -s WASM=1 -s EVAL_CTORS=2 --bind
+LDFLAGS = -s WASM=1 --bind
 LDFLAGS += --shell-file my_shell.html
 
 %.o:%.cpp
