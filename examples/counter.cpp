@@ -12,7 +12,8 @@ int main() {
     Widget div(WidgetType::Div);
 
     Widget result(WidgetType::Div);
-    // We set the id to conveniently access the widget by id in the callback
+    // We set the id to conveniently access the widget by id
+    // in the callback
     result.id("result");
     result.text("0");
     result.style(Style::FontSize, "22px");
@@ -28,8 +29,8 @@ int main() {
         Console::log("%d", COUNT);
         result.text(std::to_string(COUNT));
     });
-    // widgets are automatically appended to body, here we want to append to the
-    // div
+    // widgets are automatically appended to body, here we
+    // want to append to the div
     div.append(btn1);
 
     Widget btn2(WidgetType::Button);

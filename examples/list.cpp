@@ -12,6 +12,7 @@ void create_unordered_list(Ts... args) {
 
 int main() {
     Document::add_css_link(
-        "https://classless.de/classless.css");
+        "https://classless.de/classless.css"
+    );
     create_unordered_list("Item1", "Item2", "Item3");
 }

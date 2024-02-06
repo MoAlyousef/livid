@@ -18,14 +18,22 @@ class AppState {
     }
 
     static void update() {
-        Widget::from_id("result").text(std::to_string(counter));
+        Widget::from_id("result").text(
+            std::to_string(counter)
+        );
     }
 
     static void view() {
         Div()
-            .append(Button().text("+").handle(Event::Click, increment))
-            .append(Button().text("-").handle(Event::Click, decrement))
-            .append(Div().id("result").text(std::to_string(counter)));
+            .append(Button().text("+").handle(
+                Event::Click, increment
+            ))
+            .append(Button().text("-").handle(
+                Event::Click, decrement
+            ))
+            .append(Div().id("result").text(
+                std::to_string(counter)
+            ));
     }
 };
 
