@@ -217,12 +217,40 @@ extern "C" void set_title() {
     // This sets the document title
     Document::title("Hello");
 }
+
+__attribute__((used))
+extern "C" void draw_on_canvas() {
+    auto canvas       = Canvas(HTMLElement::from_id("mycanvas"));
+    auto ctx          = canvas.get_context("2d");
+    const auto width  = canvas.width();
+    const auto height = canvas.height();
+
+    ctx.call<void>("clearRect", 0, 0, width, height);
+
+    // rect
+    ctx.set("fillStyle", "green");
+    ctx.call<void>("fillRect", 0, 0, width, height);
+
+    // line
+    ctx.set("strokeStyle", "black");
+    ctx.call<void>("moveTo", 0, 0);
+    ctx.call<void>("lineTo", width, height);
+    ctx.call<void>("stroke");
+
+    // text
+    ctx.set("fillStyle", "black");
+    ctx.set("font", "bold 48px serif");
+    ctx.call<void, std::string>(
+        "fillText", "Hello World!", width / 2, height / 2
+    );
+}
 ```
-Notice how we expose this as a C function.
+Notice how we expose these functions as C functions.
 It's preferable to build this with the MODULARIZE shell option:
 ```bash
 em++ -s WASM=1 --bind -std=c++17 -O3 -Iinclude examples/nomain.cpp -o index.js -s MODULARIZE -s EXPORT_ES6=1
 ```
+
 You can also use CMake similar to the following:
 ```cmake
 cmake_minimum_required(VERSION 3.15)
@@ -243,7 +271,7 @@ set_target_properties(index PROPERTIES SUFFIX .js LINK_FLAGS "-s WASM=1 --bind -
 target_link_libraries(index PRIVATE livid::livid)
 ```
 
-To use your set_title() function from the javascript side:
+To use your set_title() and draw_on_canvas() function from the javascript side:
 ```html
 <!doctype html>
 <html lang=en-us>
@@ -256,15 +284,22 @@ To use your set_title() function from the javascript side:
 <body>
     <!-- Other html code -->
     <button onclick="my_set_title()">Set title</button>
+    <canvas width="600" height="400" id="mycanvas"></canvas>
+    
     <script type="module">
         import Module from "./index.js";
-        const mod = await Module();
-        window.my_set_title = mod._set_title;
+        
+        window.onload = async() => {
+            const mod = await Module();
+            window.my_set_title = mod._set_title;
+            mod._draw_on_canvas();
+        };
     </script>
 </body>
 </html>
 ```
-Notice how we create a new variable under window called "my_set_title", we assign our exported function (notice the prefixed _). Then in the button's onclick we call `my_set_title`.
+Notice how we create a new variable under window called `my_set_title`, we assign our exported function `set_title` (notice the prefixed _). Then in the button's onclick we call `my_set_title` since it was made global by attaching it to the window.
+Also note that draw_on_canvas() is called during the window's onload event.
 
 ## Documentation
 
