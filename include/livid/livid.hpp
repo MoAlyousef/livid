@@ -22,37 +22,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef __LIVID_HPP__
-#define __LIVID_HPP__
+#pragma once
 
 #include <cstdio>
-#include <cstring>
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <functional>
-#include <map>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-/// [INTERNAL]
-EMSCRIPTEN_BINDINGS(MyBindings) {
-    emscripten::class_<std::function<void(emscripten::val)>>("ListenerCallback")
-        .constructor<>()
-        .function("_internal_func_",
-                  &std::function<void(emscripten::val)>::operator());
-};
-
-static emscripten::val
-func_to_val(std::function<void(emscripten::val)> &&func) {
-    return emscripten::val(func)["_internal_func_"].call<emscripten::val>(
-        "bind", emscripten::val(func));
-}
-
 namespace livid {
 
+using Event = emscripten::val;
+
 /// List of all available Html elements
-enum class WidgetType {
+enum class HTMLElementType {
     Address,
     Article,
     Aside,
@@ -162,7 +149,7 @@ enum class WidgetType {
 };
 
 /// List of all available events
-enum class Event {
+enum class EventType {
     Abort,
     Afterprint,
     Animationend,
@@ -441,207 +428,230 @@ enum class Style {
 };
 
 namespace detail {
+
+template <typename... Ts>
+std::string format_buf(const char *fmt, Ts... ts) {
+    auto sz  = snprintf(nullptr, 0, fmt, ts...);
+    auto buf = std::make_unique<char[]>(sz + 1); // NOLINT
+    (void)snprintf(buf.get(), sz + 1, fmt, ts...);
+    std::string str(buf.get());
+    return str;
+}
+
+/// [INTERNAL]
+EMSCRIPTEN_BINDINGS(MyBindings) {
+    emscripten::class_<std::function<void(Event)>>("ListenerCallback")
+        .constructor<>()
+        .function("_internal_func_", &std::function<void(Event)>::operator());
+};
+
+static emscripten::val func_to_val(std::function<void(Event)> &&func) {
+    return emscripten::val(func)["_internal_func_"].call<emscripten::val>(
+        "bind", emscripten::val(func)
+    );
+}
+
 // clang-format off
 /// [INTERNAL]
-constexpr const char *get_element_str(WidgetType typ) {
+constexpr const char *get_element_str(HTMLElementType typ) {
     switch (typ) {
-        case WidgetType::Address: return "address";
-        case WidgetType::Article: return "article";
-        case WidgetType::Aside: return "aside";
-        case WidgetType::Footer: return "footer";
-        case WidgetType::Header: return "header";
-        case WidgetType::H1: return "h1";
-        case WidgetType::H2: return "h2";
-        case WidgetType::H3: return "h3";
-        case WidgetType::H4: return "h4";
-        case WidgetType::H5: return "h5";
-        case WidgetType::H6: return "h6";
-        case WidgetType::Main: return "main";
-        case WidgetType::Nav: return "nav";
-        case WidgetType::Section: return "section";
-        case WidgetType::Blockquote: return "blockquote";
-        case WidgetType::Dd: return "dd";
-        case WidgetType::Div: return "div";
-        case WidgetType::Dl: return "dl";
-        case WidgetType::Dt: return "dt";
-        case WidgetType::Figcaption: return "figcaption";
-        case WidgetType::Figure: return "figure";
-        case WidgetType::Hr: return "hr";
-        case WidgetType::Li: return "li";
-        case WidgetType::Ol: return "ol";
-        case WidgetType::P: return "p";
-        case WidgetType::Pre: return "pre";
-        case WidgetType::Ul: return "ul";
-        case WidgetType::A: return "a";
-        case WidgetType::Abbr: return "abbr";
-        case WidgetType::B: return "b";
-        case WidgetType::Bdi: return "bdi";
-        case WidgetType::Bdo: return "bdo";
-        case WidgetType::Br: return "br";
-        case WidgetType::Cite: return "cite";
-        case WidgetType::Code: return "code";
-        case WidgetType::Data: return "data";
-        case WidgetType::Dfn: return "dfn";
-        case WidgetType::Em: return "em";
-        case WidgetType::I: return "i";
-        case WidgetType::Kbd: return "kbd";
-        case WidgetType::Mark: return "mark";
-        case WidgetType::Q: return "q";
-        case WidgetType::Rp: return "rp";
-        case WidgetType::Rt: return "rt";
-        case WidgetType::Ruby: return "ruby";
-        case WidgetType::S: return "s";
-        case WidgetType::Samp: return "samp";
-        case WidgetType::Small: return "small";
-        case WidgetType::Span: return "span";
-        case WidgetType::Strong: return "strong";
-        case WidgetType::Sub: return "sub";
-        case WidgetType::Sup: return "sup";
-        case WidgetType::Time: return "time";
-        case WidgetType::U: return "u";
-        case WidgetType::Var: return "var";
-        case WidgetType::Wbr: return "wbr";
-        case WidgetType::Area: return "area";
-        case WidgetType::Audio: return "audio";
-        case WidgetType::Img: return "img";
-        case WidgetType::Map: return "map";
-        case WidgetType::Track: return "track";
-        case WidgetType::Video: return "video";
-        case WidgetType::Embed: return "embed";
-        case WidgetType::Iframe: return "iframe";
-        case WidgetType::Object: return "object";
-        case WidgetType::Param: return "param";
-        case WidgetType::Picture: return "picture";
-        case WidgetType::Portal: return "portal";
-        case WidgetType::Source: return "source";
-        case WidgetType::Svg: return "svg";
-        case WidgetType::Math: return "math";
-        case WidgetType::Canvas: return "canvas";
-        case WidgetType::Noscript: return "noscript";
-        case WidgetType::Script: return "script";
-        case WidgetType::Del: return "del";
-        case WidgetType::Ins: return "ins";
-        case WidgetType::Caption: return "caption";
-        case WidgetType::Col: return "col";
-        case WidgetType::Colgroup: return "colgroup";
-        case WidgetType::Table: return "table";
-        case WidgetType::Tbody: return "tbody";
-        case WidgetType::Td: return "td";
-        case WidgetType::Tfoot: return "tfoot";
-        case WidgetType::Th: return "th";
-        case WidgetType::Thead: return "thead";
-        case WidgetType::Tr: return "tr";
-        case WidgetType::Button: return "button";
-        case WidgetType::Datalist: return "datalist";
-        case WidgetType::Fieldset: return "fieldset";
-        case WidgetType::Form: return "form";
-        case WidgetType::Input: return "input";
-        case WidgetType::Label: return "label";
-        case WidgetType::Legend: return "legend";
-        case WidgetType::Meter: return "meter";
-        case WidgetType::Optgroup: return "optgroup";
-        case WidgetType::Option: return "option";
-        case WidgetType::Output: return "output";
-        case WidgetType::Progress: return "progress";
-        case WidgetType::Select: return "select";
-        case WidgetType::Textarea: return "textarea";
-        case WidgetType::Details: return "details";
-        case WidgetType::Dialog: return "dialog";
-        case WidgetType::Menu: return "menu";
-        case WidgetType::Summary: return "summary";
-        case WidgetType::Slot: return "slot";
-        case WidgetType::Template: return "template";
+        case HTMLElementType::Address: return "address";
+        case HTMLElementType::Article: return "article";
+        case HTMLElementType::Aside: return "aside";
+        case HTMLElementType::Footer: return "footer";
+        case HTMLElementType::Header: return "header";
+        case HTMLElementType::H1: return "h1";
+        case HTMLElementType::H2: return "h2";
+        case HTMLElementType::H3: return "h3";
+        case HTMLElementType::H4: return "h4";
+        case HTMLElementType::H5: return "h5";
+        case HTMLElementType::H6: return "h6";
+        case HTMLElementType::Main: return "main";
+        case HTMLElementType::Nav: return "nav";
+        case HTMLElementType::Section: return "section";
+        case HTMLElementType::Blockquote: return "blockquote";
+        case HTMLElementType::Dd: return "dd";
+        case HTMLElementType::Div: return "div";
+        case HTMLElementType::Dl: return "dl";
+        case HTMLElementType::Dt: return "dt";
+        case HTMLElementType::Figcaption: return "figcaption";
+        case HTMLElementType::Figure: return "figure";
+        case HTMLElementType::Hr: return "hr";
+        case HTMLElementType::Li: return "li";
+        case HTMLElementType::Ol: return "ol";
+        case HTMLElementType::P: return "p";
+        case HTMLElementType::Pre: return "pre";
+        case HTMLElementType::Ul: return "ul";
+        case HTMLElementType::A: return "a";
+        case HTMLElementType::Abbr: return "abbr";
+        case HTMLElementType::B: return "b";
+        case HTMLElementType::Bdi: return "bdi";
+        case HTMLElementType::Bdo: return "bdo";
+        case HTMLElementType::Br: return "br";
+        case HTMLElementType::Cite: return "cite";
+        case HTMLElementType::Code: return "code";
+        case HTMLElementType::Data: return "data";
+        case HTMLElementType::Dfn: return "dfn";
+        case HTMLElementType::Em: return "em";
+        case HTMLElementType::I: return "i";
+        case HTMLElementType::Kbd: return "kbd";
+        case HTMLElementType::Mark: return "mark";
+        case HTMLElementType::Q: return "q";
+        case HTMLElementType::Rp: return "rp";
+        case HTMLElementType::Rt: return "rt";
+        case HTMLElementType::Ruby: return "ruby";
+        case HTMLElementType::S: return "s";
+        case HTMLElementType::Samp: return "samp";
+        case HTMLElementType::Small: return "small";
+        case HTMLElementType::Span: return "span";
+        case HTMLElementType::Strong: return "strong";
+        case HTMLElementType::Sub: return "sub";
+        case HTMLElementType::Sup: return "sup";
+        case HTMLElementType::Time: return "time";
+        case HTMLElementType::U: return "u";
+        case HTMLElementType::Var: return "var";
+        case HTMLElementType::Wbr: return "wbr";
+        case HTMLElementType::Area: return "area";
+        case HTMLElementType::Audio: return "audio";
+        case HTMLElementType::Img: return "img";
+        case HTMLElementType::Map: return "map";
+        case HTMLElementType::Track: return "track";
+        case HTMLElementType::Video: return "video";
+        case HTMLElementType::Embed: return "embed";
+        case HTMLElementType::Iframe: return "iframe";
+        case HTMLElementType::Object: return "object";
+        case HTMLElementType::Param: return "param";
+        case HTMLElementType::Picture: return "picture";
+        case HTMLElementType::Portal: return "portal";
+        case HTMLElementType::Source: return "source";
+        case HTMLElementType::Svg: return "svg";
+        case HTMLElementType::Math: return "math";
+        case HTMLElementType::Canvas: return "canvas";
+        case HTMLElementType::Noscript: return "noscript";
+        case HTMLElementType::Script: return "script";
+        case HTMLElementType::Del: return "del";
+        case HTMLElementType::Ins: return "ins";
+        case HTMLElementType::Caption: return "caption";
+        case HTMLElementType::Col: return "col";
+        case HTMLElementType::Colgroup: return "colgroup";
+        case HTMLElementType::Table: return "table";
+        case HTMLElementType::Tbody: return "tbody";
+        case HTMLElementType::Td: return "td";
+        case HTMLElementType::Tfoot: return "tfoot";
+        case HTMLElementType::Th: return "th";
+        case HTMLElementType::Thead: return "thead";
+        case HTMLElementType::Tr: return "tr";
+        case HTMLElementType::Button: return "button";
+        case HTMLElementType::Datalist: return "datalist";
+        case HTMLElementType::Fieldset: return "fieldset";
+        case HTMLElementType::Form: return "form";
+        case HTMLElementType::Input: return "input";
+        case HTMLElementType::Label: return "label";
+        case HTMLElementType::Legend: return "legend";
+        case HTMLElementType::Meter: return "meter";
+        case HTMLElementType::Optgroup: return "optgroup";
+        case HTMLElementType::Option: return "option";
+        case HTMLElementType::Output: return "output";
+        case HTMLElementType::Progress: return "progress";
+        case HTMLElementType::Select: return "select";
+        case HTMLElementType::Textarea: return "textarea";
+        case HTMLElementType::Details: return "details";
+        case HTMLElementType::Dialog: return "dialog";
+        case HTMLElementType::Menu: return "menu";
+        case HTMLElementType::Summary: return "summary";
+        case HTMLElementType::Slot: return "slot";
+        case HTMLElementType::Template: return "template";
         default: return "div";
     }
 }
 
-constexpr const char *get_event_str(Event ev) {
+constexpr const char *get_event_str(EventType ev) {
     switch (ev) {
-        case Event::Abort: return "abort";
-        case Event::Afterprint: return "afterprint";
-        case Event::Animationend: return "animationend";
-        case Event::Animationiteration: return "animationiteration";
-        case Event::Animationstart: return "animationstart";
-        case Event::Beforeprint: return "beforeprint";
-        case Event::Beforeunload: return "beforeunload";
-        case Event::Blur: return "blur";
-        case Event::Canplay: return "canplay";
-        case Event::Canplaythrough: return "canplaythrough";
-        case Event::Change: return "change";
-        case Event::Click: return "click";
-        case Event::Contextmenu: return "contextmenu";
-        case Event::Copy: return "copy";
-        case Event::Cut: return "cut";
-        case Event::Dblclick: return "dblclick";
-        case Event::Drag: return "drag";
-        case Event::Dragend: return "dragend";
-        case Event::Dragenter: return "dragenter";
-        case Event::Dragleave: return "dragleave";
-        case Event::Dragover: return "dragover";
-        case Event::Dragstart: return "dragstart";
-        case Event::Drop: return "drop";
-        case Event::Durationchange: return "durationchange";
-        case Event::Ended: return "ended";
-        case Event::Error: return "error";
-        case Event::Focus: return "focus";
-        case Event::Focusin: return "focusin";
-        case Event::Focusout: return "focusout";
-        case Event::Fullscreenchange: return "fullscreenchange";
-        case Event::Fullscreenerror: return "fullscreenerror";
-        case Event::Hashchange: return "hashchange";
-        case Event::Input: return "input";
-        case Event::Invalid: return "invalid";
-        case Event::Keydown: return "keydown";
-        case Event::Keypress: return "keypress";
-        case Event::Keyup: return "keyup";
-        case Event::Load: return "load";
-        case Event::Loadeddata: return "loadeddata";
-        case Event::Loadedmetadata: return "loadedmetadata";
-        case Event::Loadstart: return "loadstart";
-        case Event::Message: return "message";
-        case Event::Mousedown: return "mousedown";
-        case Event::Mouseenter: return "mouseenter";
-        case Event::Mouseleave: return "mouseleave";
-        case Event::Mousemove: return "mousemove";
-        case Event::Mouseover: return "mouseover";
-        case Event::Mouseout: return "mouseout";
-        case Event::Mouseup: return "mouseup";
-        case Event::Mousewheel: return "mousewheel";
-        case Event::Offline: return "offline";
-        case Event::Online: return "online";
-        case Event::Open: return "open";
-        case Event::Pagehide: return "pagehide";
-        case Event::Pageshow: return "pageshow";
-        case Event::Paste: return "paste";
-        case Event::Pause: return "pause";
-        case Event::Play: return "play";
-        case Event::Playing: return "playing";
-        case Event::Popstate: return "popstate";
-        case Event::Progress: return "progress";
-        case Event::Ratechange: return "ratechange";
-        case Event::Resize: return "resize";
-        case Event::Reset: return "reset";
-        case Event::Scroll: return "scroll";
-        case Event::Search: return "search";
-        case Event::Seeked: return "seeked";
-        case Event::Seeking: return "seeking";
-        case Event::Select: return "select";
-        case Event::Show: return "show";
-        case Event::Stalled: return "stalled";
-        case Event::Storage: return "storage";
-        case Event::Submit: return "submit";
-        case Event::Suspend: return "suspend";
-        case Event::Timeupdate: return "timeupdate";
-        case Event::Toggle: return "toggle";
-        case Event::Touchcancel: return "touchcancel";
-        case Event::Touchend: return "touchend";
-        case Event::Touchmove: return "touchmove";
-        case Event::Touchstart: return "touchstart";
-        case Event::Transitionend: return "transitionend";
-        case Event::Unload: return "unload";
-        case Event::Volumechange: return "volumechange";
-        case Event::Waiting: return "waiting";
-        case Event::Wheel: return "wheel";
+        case EventType::Abort: return "abort";
+        case EventType::Afterprint: return "afterprint";
+        case EventType::Animationend: return "animationend";
+        case EventType::Animationiteration: return "animationiteration";
+        case EventType::Animationstart: return "animationstart";
+        case EventType::Beforeprint: return "beforeprint";
+        case EventType::Beforeunload: return "beforeunload";
+        case EventType::Blur: return "blur";
+        case EventType::Canplay: return "canplay";
+        case EventType::Canplaythrough: return "canplaythrough";
+        case EventType::Change: return "change";
+        case EventType::Click: return "click";
+        case EventType::Contextmenu: return "contextmenu";
+        case EventType::Copy: return "copy";
+        case EventType::Cut: return "cut";
+        case EventType::Dblclick: return "dblclick";
+        case EventType::Drag: return "drag";
+        case EventType::Dragend: return "dragend";
+        case EventType::Dragenter: return "dragenter";
+        case EventType::Dragleave: return "dragleave";
+        case EventType::Dragover: return "dragover";
+        case EventType::Dragstart: return "dragstart";
+        case EventType::Drop: return "drop";
+        case EventType::Durationchange: return "durationchange";
+        case EventType::Ended: return "ended";
+        case EventType::Error: return "error";
+        case EventType::Focus: return "focus";
+        case EventType::Focusin: return "focusin";
+        case EventType::Focusout: return "focusout";
+        case EventType::Fullscreenchange: return "fullscreenchange";
+        case EventType::Fullscreenerror: return "fullscreenerror";
+        case EventType::Hashchange: return "hashchange";
+        case EventType::Input: return "input";
+        case EventType::Invalid: return "invalid";
+        case EventType::Keydown: return "keydown";
+        case EventType::Keypress: return "keypress";
+        case EventType::Keyup: return "keyup";
+        case EventType::Load: return "load";
+        case EventType::Loadeddata: return "loadeddata";
+        case EventType::Loadedmetadata: return "loadedmetadata";
+        case EventType::Loadstart: return "loadstart";
+        case EventType::Message: return "message";
+        case EventType::Mousedown: return "mousedown";
+        case EventType::Mouseenter: return "mouseenter";
+        case EventType::Mouseleave: return "mouseleave";
+        case EventType::Mousemove: return "mousemove";
+        case EventType::Mouseover: return "mouseover";
+        case EventType::Mouseout: return "mouseout";
+        case EventType::Mouseup: return "mouseup";
+        case EventType::Mousewheel: return "mousewheel";
+        case EventType::Offline: return "offline";
+        case EventType::Online: return "online";
+        case EventType::Open: return "open";
+        case EventType::Pagehide: return "pagehide";
+        case EventType::Pageshow: return "pageshow";
+        case EventType::Paste: return "paste";
+        case EventType::Pause: return "pause";
+        case EventType::Play: return "play";
+        case EventType::Playing: return "playing";
+        case EventType::Popstate: return "popstate";
+        case EventType::Progress: return "progress";
+        case EventType::Ratechange: return "ratechange";
+        case EventType::Resize: return "resize";
+        case EventType::Reset: return "reset";
+        case EventType::Scroll: return "scroll";
+        case EventType::Search: return "search";
+        case EventType::Seeked: return "seeked";
+        case EventType::Seeking: return "seeking";
+        case EventType::Select: return "select";
+        case EventType::Show: return "show";
+        case EventType::Stalled: return "stalled";
+        case EventType::Storage: return "storage";
+        case EventType::Submit: return "submit";
+        case EventType::Suspend: return "suspend";
+        case EventType::Timeupdate: return "timeupdate";
+        case EventType::Toggle: return "toggle";
+        case EventType::Touchcancel: return "touchcancel";
+        case EventType::Touchend: return "touchend";
+        case EventType::Touchmove: return "touchmove";
+        case EventType::Touchstart: return "touchstart";
+        case EventType::Transitionend: return "transitionend";
+        case EventType::Unload: return "unload";
+        case EventType::Volumechange: return "volumechange";
+        case EventType::Waiting: return "waiting";
+        case EventType::Wheel: return "wheel";
     }
 }
 
@@ -839,84 +849,82 @@ constexpr const char *get_style_str(Style s) {
 // clang-format on
 } // namespace detail
 
-/// Holds the implementation of all widgets, not specific to WidgetType
-class Widget {
+/// Holds the implementation of all elements, not specific to HTMLElementType
+class HTMLElement {
   protected:
-    emscripten::val v = emscripten::val::null();
+    emscripten::val v = emscripten::val::null(); // NOLINT
 
-    Widget() {
-    }
+    HTMLElement() = default;
 
   public:
-    Widget(emscripten::val val) : v(val) {
+    operator emscripten::val() const { return v; }
+    HTMLElement(emscripten::val val) : v(val) {
+        if (!val.instanceof (emscripten::val::global("HTMLElement")))
+            throw std::runtime_error("Element is not an HTML Element");
     }
 
-    Widget(const Widget &other) = default;
-
-    Widget(Widget &&other) = default;
-
-    Widget &operator=(const Widget &other) {
-        *this = other;
-        return *this;
-    }
-
-    /// Creates a Widget from a WidgetType
-    Widget(const WidgetType typ) {
-        if (typ == WidgetType::Svg) {
+    /// Creates a HTMLElement from a HTMLElementType
+    HTMLElement(const HTMLElementType typ) {
+        if (typ == HTMLElementType::Svg) {
             auto doc = emscripten::val::global("document");
-            v = doc.call<emscripten::val>(
+            v        = doc.call<emscripten::val>(
                 "createElementNS",
                 emscripten::val("http://www.w3.org/2000/svg"),
-                emscripten::val("svg"));
-            doc.call<emscripten::val>("getElementsByTagName",
-                                      emscripten::val("body"))[0]
+                emscripten::val("svg")
+            );
+            doc.call<emscripten::val>(
+                   "getElementsByTagName", emscripten::val("body")
+            )[0]
                 .call<void>("appendChild", v);
         } else {
             const char *element = detail::get_element_str(typ);
-            auto doc = emscripten::val::global("document");
-            v = doc.call<emscripten::val>("createElement",
-                                          emscripten::val(element));
-            doc.call<emscripten::val>("getElementsByTagName",
-                                      emscripten::val("body"))[0]
+            auto doc            = emscripten::val::global("document");
+            v                   = doc.call<emscripten::val>(
+                "createElement", emscripten::val(element)
+            );
+            doc.call<emscripten::val>(
+                   "getElementsByTagName", emscripten::val("body")
+            )[0]
                 .call<void>("appendChild", v);
         }
     }
 
     /// Creates a namespaced element, calls `createElementNS`
-    Widget(const std::string &name_space, const std::string &tag) : Widget() {
+    HTMLElement(const std::string &name_space, const std::string &tag)
+        : HTMLElement() {
         auto doc = emscripten::val::global("document");
         v = doc.call<emscripten::val>("createElementNS", name_space, tag);
-        doc.call<emscripten::val>("getElementsByTagName",
-                                  emscripten::val("body"))[0]
+        doc.call<emscripten::val>(
+               "getElementsByTagName", emscripten::val("body")
+        )[0]
             .call<void>("appendChild", v);
     }
 
-    /// Construct a Widget from an html id
-    static Widget from_id(const std::string &id) {
-        auto doc = emscripten::val::global("document");
-        auto elem = doc.call<emscripten::val>("getElementById",
-                                              emscripten::val(id.c_str()));
-        return Widget(elem);
+    /// Construct a HTMLElement from an html id
+    static HTMLElement from_id(const std::string &id) {
+        auto doc  = emscripten::val::global("document");
+        auto elem = doc.call<emscripten::val>(
+            "getElementById", emscripten::val(id.c_str())
+        );
+        if (!elem.instanceof (emscripten::val::global("HTMLElement")))
+            throw std::runtime_error("Element is not an HTML Element");
+        return {elem};
     }
 
-    /// Delete a widget
-    static void delete_widget(Widget &&elem) {
-        elem.outer_html("");
-    }
+    /// Delete a HTMLElement
+    static void delete_element(HTMLElement &&elem) { elem.outer_html(""); }
 
     /// Get the Html id
-    std::string id() const {
-        return v["id"].as<std::string>();
-    }
+    [[nodiscard]] std::string id() const { return v["id"].as<std::string>(); }
 
     /// Set the Html id
-    Widget &id(const std::string &val) {
+    HTMLElement &id(const std::string &val) {
         v.set("id", val);
         return *this;
     }
 
     /// Set the Html attribute
-    Widget &attr(const std::string &attr, const std::string &val) {
+    HTMLElement &attr(const std::string &attr, const std::string &val) {
         v.call<void>("setAttribute", attr, val);
         return *this;
     }
@@ -927,138 +935,133 @@ class Widget {
     }
 
     /// Set the Html class
-    Widget &klass(const std::string &val) {
+    HTMLElement &klass(const char *val) {
         v.set("className", val);
         return *this;
     }
 
     /// Get the Html class
-    std::string klass() {
-        return v["className"].as<std::string>();
-    }
+    std::string klass() { return v["className"].as<std::string>(); }
 
     /// Append a child
-    Widget &append(const Widget &w) {
+    HTMLElement &append(const HTMLElement &w) {
         v.call<void>("appendChild", w.v);
         return *this;
     }
 
     /// Remove a child
-    Widget &remove(const Widget &w) {
+    HTMLElement &remove(const HTMLElement &w) {
         v.call<void>("removeChild", w.v);
         return *this;
     }
 
     /// Add an event listener
-    Widget &handle(Event event, std::function<void(emscripten::val)> &&func) {
-        v.call<void>("addEventListener",
-                     std::string(detail::get_event_str(event)),
-                     func_to_val(std::move(func)));
+    HTMLElement &handle(EventType event, std::function<void(Event)> &&func) {
+        v.call<void>(
+            "addEventListener",
+            std::string(detail::get_event_str(event)),
+            detail::func_to_val(std::move(func))
+        );
         return *this;
     }
 
     /// Set the text content
-    Widget &text(const std::string &html) {
+    HTMLElement &text(const std::string &html) {
         v.set("textContent", html);
         return *this;
     }
 
     /// Get the text content
-    std::string text() {
-        return v["textContent"].as<std::string>();
-    }
+    std::string text() { return v["textContent"].as<std::string>(); }
 
     /// Set the outer html
-    Widget &outer_html(const std::string &html) {
+    HTMLElement &outer_html(const std::string &html) {
         v.set("outerHTML", html);
         return *this;
     }
 
     /// Get the outer html
-    std::string outer_html() {
-        return v["outerHTML"].as<std::string>();
-    }
+    std::string outer_html() { return v["outerHTML"].as<std::string>(); }
 
     /// Set the inner html
-    Widget &inner_html(const std::string &html) {
+    HTMLElement &inner_html(const std::string &html) {
         v.set("innerHTML", html);
         return *this;
     }
 
     /// Get the inner html
-    std::string inner_html() {
-        return v["innerHTML"].as<std::string>();
-    }
+    std::string inner_html() { return v["innerHTML"].as<std::string>(); }
 
     /// Set the href value
-    Widget &href(const std::string &html) {
+    HTMLElement &href(const std::string &html) {
         v.set("href", html);
         return *this;
     }
 
     /// Get the href value
-    std::string href() {
-        return v["href"].as<std::string>();
-    }
+    std::string href() { return v["href"].as<std::string>(); }
 
-    /// Set the style of the widget
-    Widget &style(Style style, const std::string &html) {
+    /// Set the style of the element
+    HTMLElement &style(Style style, const std::string &html) {
         auto s = detail::get_style_str(style);
         v["style"].set(s, html);
         return *this;
     }
 
-    /// Get the style of the widget
+    /// Get the style of the element
     std::string style(Style style) {
         auto s = detail::get_style_str(style);
         return v["style"][s].as<std::string>();
     }
 
     /// Set the Html attribute
-    Widget &ns_attr(const std::string &ns, const std::string &attr,
-                    const std::string &val) {
+    HTMLElement &ns_attr(
+        const std::string &ns, const std::string &attr, const std::string &val
+    ) {
         v.call<void>("setAttributeNS", attr, val);
         return *this;
     }
 };
 
 class Document final {
+    // NOLINTNEXTLINE
     static inline emscripten::val doc_ = emscripten::val::global("document");
 
   public:
     explicit Document() = delete;
 
     /// Set the title of the document
-    static void title(const std::string &t) {
-        doc_.set("title", t);
-    }
+    static void title(const std::string &t) { doc_.set("title", t); }
 
     static void add_css_link(const std::string &t) {
         auto link = std::string("<link rel='stylesheet' href='") + t + "'/>";
-        auto head = doc_.call<emscripten::val>("getElementsByTagName",
-                                               std::string("head"))[0];
+        auto head = doc_.call<emscripten::val>(
+            "getElementsByTagName", std::string("head")
+        )[0];
         head.call<void>("insertAdjacentHTML", std::string("beforeend"), link);
     }
 
     /// Get all elements of the specified html className
-    static std::vector<Widget> elems_by_class(const std::string &klass) {
+    static std::vector<HTMLElement> elems_by_class(const std::string &klass) {
         auto elems =
             doc_.call<emscripten::val>("getElementsByClassName", klass);
         auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
-        std::vector<Widget> v;
+        std::vector<HTMLElement> v;
         for (auto elem : elems1) {
-            v.push_back(Widget(elem));
+            v.emplace_back(elem);
         }
         return v;
     }
 
     /// Get all elements of the specified html tagName
-    static std::vector<Widget> elems_by_tag(const std::string &tag) {
-        auto elems = doc_.call<emscripten::val>("getElementsByTagName", tag);
+    static std::vector<HTMLElement> elems_by_tag(const std::string &tag) {
+        auto elems = doc_.call<emscripten::val>(
+            "getElementsByTagName", emscripten::val(tag)
+        );
         auto elems1 = emscripten::vecFromJSArray<emscripten::val>(elems);
-        std::vector<Widget> v;
+        std::vector<HTMLElement> v;
         for (auto elem : elems1) {
-            v.push_back(Widget(elem));
+            v.emplace_back(elem);
         }
         return v;
     }
@@ -1066,12 +1069,9 @@ class Document final {
     /// Equivalent to JS alert
     template <typename... Ts>
     static void alert(const char *fmt, Ts... ts) {
-        auto sz = snprintf(nullptr, 0, fmt, ts...);
-        auto buf = (char *)malloc(sz + 1);
-        auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        std::string a = "alert(" + std::string(buf) + ");";
+        auto buf      = detail::format_buf(fmt, ts...);
+        std::string a = "alert(" + buf + ");";
         emscripten_run_script(a.c_str());
-        free(buf);
     }
 
     /// Equivalent to JS alert
@@ -1082,7 +1082,8 @@ class Document final {
 };
 
 class Console final {
-    static inline emscripten::val console_ = emscripten::val::global("console");
+    // NOLINTNEXTLINE
+    const static inline emscripten::val c_ = emscripten::val::global("console");
 
   public:
     explicit Console() = delete;
@@ -1090,398 +1091,186 @@ class Console final {
     /// Equivalent to console.log
     template <typename... Ts>
     static void log(const char *fmt, Ts... ts) {
-        auto sz = snprintf(nullptr, 0, fmt, ts...);
-        auto buf = (char *)malloc(sz + 1);
-        auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        console_.call<void>("log", std::string(buf));
-        free(buf);
+        auto buf = detail::format_buf(fmt, ts...);
+        c_.call<void>("log", buf);
     }
 
     /// Equivalent to console.log
-    static void log(const char *str) {
-        console_.call<void>("log", std::string(str));
-    }
+    static void log(const char *str) { c_.call<void>("log", std::string(str)); }
 
     /// Equivalent to console.log
-    static void log(emscripten::val v) {
-        console_.call<void>("log", v);
-    }
+    static void log(emscripten::val v) { c_.call<void>("log", v); }
 
     /// Equivalent to console.warn
     template <typename... Ts>
     static void warn(const char *fmt, Ts... ts) {
-        auto sz = snprintf(nullptr, 0, fmt, ts...);
-        auto buf = (char *)malloc(sz + 1);
-        auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        console_.call<void>("warn", std::string(buf));
-        free(buf);
+        auto buf = detail::format_buf(fmt, ts...);
+        c_.call<void>("warn", buf);
     }
 
     /// Equivalent to console.warn
     static void warn(const char *str) {
-        console_.call<void>("warn", std::string(str));
+        c_.call<void>("warn", std::string(str));
     }
 
     /// Equivalent to console.warn
-    static void warn(emscripten::val v) {
-        console_.call<void>("warn", v);
-    }
+    static void warn(emscripten::val v) { c_.call<void>("warn", v); }
 
     /// Equivalent to console.error
     template <typename... Ts>
     static void error(const char *fmt, Ts... ts) {
-        auto sz = snprintf(nullptr, 0, fmt, ts...);
-        auto buf = (char *)malloc(sz + 1);
-        auto ret = snprintf(buf, sz + 1, fmt, ts...);
-        console_.call<void>("error", std::string(buf));
-        free(buf);
+        auto buf = detail::format_buf(fmt, ts...);
+        c_.call<void>("error", buf);
     }
 
     /// Equivalent to console.error
     static void error(const char *str) {
-        console_.call<void>("error", std::string(str));
+        c_.call<void>("error", std::string(str));
     }
 
     /// Equivalent to console.error
-    static void error(emscripten::val v) {
-        console_.call<void>("error", v);
-    }
+    static void error(emscripten::val v) { c_.call<void>("error", v); }
 
     /// Equivalent to console.clear
-    static void clear() {
-        console_.call<void>("clear");
-    }
+    static void clear() { c_.call<void>("clear"); }
 
     /// Equivalent to console.group
     static void group(const char *str) {
-        console_.call<void>("group", std::string(str));
+        c_.call<void>("group", std::string(str));
     }
 
     /// Equivalent to console.group
-    static void group(emscripten::val v) {
-        console_.call<void>("group", v);
+    static void group(emscripten::val v) { c_.call<void>("group", v); }
+};
+
+class Canvas : public HTMLElement {
+  public:
+    Canvas() : HTMLElement(HTMLElementType::Canvas) {}
+    Canvas(int w, int h) : HTMLElement(HTMLElementType::Canvas) {
+        width(w);
+        height(h);
+    }
+    [[nodiscard]] int width() const { return v["width"].as<int>(); }
+    [[nodiscard]] int height() const { return v["height"].as<int>(); }
+    void width(int w) { v.set("width", w); }
+    void height(int h) { v.set("height", h); }
+    auto get_context(const std::string &typ) {
+        return v.call<emscripten::val>("getContext", typ);
     }
 };
 
-static inline Widget Address() {
-    return Widget(WidgetType::Address);
-}
-static inline Widget Article() {
-    return Widget(WidgetType::Article);
-}
-static inline Widget Aside() {
-    return Widget(WidgetType::Aside);
-}
-static inline Widget Footer() {
-    return Widget(WidgetType::Footer);
-}
-static inline Widget Header() {
-    return Widget(WidgetType::Header);
-}
-static inline Widget H1() {
-    return Widget(WidgetType::H1);
-}
-static inline Widget H2() {
-    return Widget(WidgetType::H2);
-}
-static inline Widget H3() {
-    return Widget(WidgetType::H3);
-}
-static inline Widget H4() {
-    return Widget(WidgetType::H4);
-}
-static inline Widget H5() {
-    return Widget(WidgetType::H5);
-}
-static inline Widget H6() {
-    return Widget(WidgetType::H6);
-}
-static inline Widget Main() {
-    return Widget(WidgetType::Main);
-}
-static inline Widget Nav() {
-    return Widget(WidgetType::Nav);
-}
-static inline Widget Section() {
-    return Widget(WidgetType::Section);
-}
-static inline Widget Blockquote() {
-    return Widget(WidgetType::Blockquote);
-}
-static inline Widget Dd() {
-    return Widget(WidgetType::Dd);
-}
-static inline Widget Div() {
-    return Widget(WidgetType::Div);
-}
-static inline Widget Dl() {
-    return Widget(WidgetType::Dl);
-}
-static inline Widget Dt() {
-    return Widget(WidgetType::Dt);
-}
-static inline Widget Figcaption() {
-    return Widget(WidgetType::Figcaption);
-}
-static inline Widget Figure() {
-    return Widget(WidgetType::Figure);
-}
-static inline Widget Hr() {
-    return Widget(WidgetType::Hr);
-}
-static inline Widget Li() {
-    return Widget(WidgetType::Li);
-}
-static inline Widget Ol() {
-    return Widget(WidgetType::Ol);
-}
-static inline Widget P() {
-    return Widget(WidgetType::P);
-}
-static inline Widget Pre() {
-    return Widget(WidgetType::Pre);
-}
-static inline Widget Ul() {
-    return Widget(WidgetType::Ul);
-}
-static inline Widget A() {
-    return Widget(WidgetType::A);
-}
-static inline Widget Abbr() {
-    return Widget(WidgetType::Abbr);
-}
-static inline Widget B() {
-    return Widget(WidgetType::B);
-}
-static inline Widget Bdi() {
-    return Widget(WidgetType::Bdi);
-}
-static inline Widget Bdo() {
-    return Widget(WidgetType::Bdo);
-}
-static inline Widget Br() {
-    return Widget(WidgetType::Br);
-}
-static inline Widget Cite() {
-    return Widget(WidgetType::Cite);
-}
-static inline Widget Code() {
-    return Widget(WidgetType::Code);
-}
-static inline Widget Data() {
-    return Widget(WidgetType::Data);
-}
-static inline Widget Dfn() {
-    return Widget(WidgetType::Dfn);
-}
-static inline Widget Em() {
-    return Widget(WidgetType::Em);
-}
-static inline Widget I() {
-    return Widget(WidgetType::I);
-}
-static inline Widget Kbd() {
-    return Widget(WidgetType::Kbd);
-}
-static inline Widget Mark() {
-    return Widget(WidgetType::Mark);
-}
-static inline Widget Q() {
-    return Widget(WidgetType::Q);
-}
-static inline Widget Rp() {
-    return Widget(WidgetType::Rp);
-}
-static inline Widget Rt() {
-    return Widget(WidgetType::Rt);
-}
-static inline Widget Ruby() {
-    return Widget(WidgetType::Ruby);
-}
-static inline Widget S() {
-    return Widget(WidgetType::S);
-}
-static inline Widget Samp() {
-    return Widget(WidgetType::Samp);
-}
-static inline Widget Small() {
-    return Widget(WidgetType::Small);
-}
-static inline Widget Span() {
-    return Widget(WidgetType::Span);
-}
-static inline Widget Strong() {
-    return Widget(WidgetType::Strong);
-}
-static inline Widget Sub() {
-    return Widget(WidgetType::Sub);
-}
-static inline Widget Sup() {
-    return Widget(WidgetType::Sup);
-}
-static inline Widget Time() {
-    return Widget(WidgetType::Time);
-}
-static inline Widget U() {
-    return Widget(WidgetType::U);
-}
-static inline Widget Var() {
-    return Widget(WidgetType::Var);
-}
-static inline Widget Wbr() {
-    return Widget(WidgetType::Wbr);
-}
-static inline Widget Area() {
-    return Widget(WidgetType::Area);
-}
-static inline Widget Audio() {
-    return Widget(WidgetType::Audio);
-}
-static inline Widget Img() {
-    return Widget(WidgetType::Img);
-}
-static inline Widget Map() {
-    return Widget(WidgetType::Map);
-}
-static inline Widget Track() {
-    return Widget(WidgetType::Track);
-}
-static inline Widget Video() {
-    return Widget(WidgetType::Video);
-}
-static inline Widget Embed() {
-    return Widget(WidgetType::Embed);
-}
-static inline Widget Iframe() {
-    return Widget(WidgetType::Iframe);
-}
-static inline Widget Object() {
-    return Widget(WidgetType::Object);
-}
-static inline Widget Param() {
-    return Widget(WidgetType::Param);
-}
-static inline Widget Picture() {
-    return Widget(WidgetType::Picture);
-}
-static inline Widget Portal() {
-    return Widget(WidgetType::Portal);
-}
-static inline Widget Source() {
-    return Widget(WidgetType::Source);
-}
-static inline Widget Svg() {
-    return Widget(WidgetType::Svg);
-}
-static inline Widget Math() {
-    return Widget(WidgetType::Math);
-}
-static inline Widget Canvas() {
-    return Widget(WidgetType::Canvas);
-}
-static inline Widget Noscript() {
-    return Widget(WidgetType::Noscript);
-}
-static inline Widget Script() {
-    return Widget(WidgetType::Script);
-}
-static inline Widget Del() {
-    return Widget(WidgetType::Del);
-}
-static inline Widget Ins() {
-    return Widget(WidgetType::Ins);
-}
-static inline Widget Caption() {
-    return Widget(WidgetType::Caption);
-}
-static inline Widget Col() {
-    return Widget(WidgetType::Col);
-}
-static inline Widget Colgroup() {
-    return Widget(WidgetType::Colgroup);
-}
-static inline Widget Table() {
-    return Widget(WidgetType::Table);
-}
-static inline Widget Tbody() {
-    return Widget(WidgetType::Tbody);
-}
-static inline Widget Td() {
-    return Widget(WidgetType::Td);
-}
-static inline Widget Tfoot() {
-    return Widget(WidgetType::Tfoot);
-}
-static inline Widget Th() {
-    return Widget(WidgetType::Th);
-}
-static inline Widget Thead() {
-    return Widget(WidgetType::Thead);
-}
-static inline Widget Tr() {
-    return Widget(WidgetType::Tr);
-}
-static inline Widget Button() {
-    return Widget(WidgetType::Button);
-}
-static inline Widget Datalist() {
-    return Widget(WidgetType::Datalist);
-}
-static inline Widget Fieldset() {
-    return Widget(WidgetType::Fieldset);
-}
-static inline Widget Form() {
-    return Widget(WidgetType::Form);
-}
-static inline Widget Input() {
-    return Widget(WidgetType::Input);
-}
-static inline Widget Label() {
-    return Widget(WidgetType::Label);
-}
-static inline Widget Legend() {
-    return Widget(WidgetType::Legend);
-}
-static inline Widget Meter() {
-    return Widget(WidgetType::Meter);
-}
-static inline Widget Optgroup() {
-    return Widget(WidgetType::Optgroup);
-}
-static inline Widget Option() {
-    return Widget(WidgetType::Option);
-}
-static inline Widget Output() {
-    return Widget(WidgetType::Output);
-}
-static inline Widget Progress() {
-    return Widget(WidgetType::Progress);
-}
-static inline Widget Select() {
-    return Widget(WidgetType::Select);
-}
-static inline Widget Textarea() {
-    return Widget(WidgetType::Textarea);
-}
-static inline Widget Details() {
-    return Widget(WidgetType::Details);
-}
-static inline Widget Dialog() {
-    return Widget(WidgetType::Dialog);
-}
-static inline Widget Menu() {
-    return Widget(WidgetType::Menu);
-}
-static inline Widget Summary() {
-    return Widget(WidgetType::Summary);
-}
-static inline Widget Slot() {
-    return Widget(WidgetType::Slot);
-}
-static inline Widget Template() {
-    return Widget(WidgetType::Template);
-}
+// NOLINTBEGIN
+#define ELEMENT(E)                                                             \
+    class E : public HTMLElement {                                             \
+      public:                                                                  \
+        E() : HTMLElement(HTMLElementType::E) {}                               \
+    };
+// NOLINTEND
+
+ELEMENT(Address)
+ELEMENT(Article)
+ELEMENT(Aside)
+ELEMENT(Footer)
+ELEMENT(Header)
+ELEMENT(H1)
+ELEMENT(H2)
+ELEMENT(H3)
+ELEMENT(H4)
+ELEMENT(H5)
+ELEMENT(H6)
+ELEMENT(Main)
+ELEMENT(Nav)
+ELEMENT(Section)
+ELEMENT(Blockquote)
+ELEMENT(Dd)
+ELEMENT(Div)
+ELEMENT(Dl)
+ELEMENT(Dt)
+ELEMENT(Figcaption)
+ELEMENT(Figure)
+ELEMENT(Hr)
+ELEMENT(Li)
+ELEMENT(Ol)
+ELEMENT(P)
+ELEMENT(Pre)
+ELEMENT(Ul)
+ELEMENT(A)
+ELEMENT(Abbr)
+ELEMENT(B)
+ELEMENT(Bdi)
+ELEMENT(Bdo)
+ELEMENT(Br)
+ELEMENT(Cite)
+ELEMENT(Code)
+ELEMENT(Data)
+ELEMENT(Dfn)
+ELEMENT(Em)
+ELEMENT(I)
+ELEMENT(Kbd)
+ELEMENT(Mark)
+ELEMENT(Q)
+ELEMENT(Rp)
+ELEMENT(Rt)
+ELEMENT(Ruby)
+ELEMENT(S)
+ELEMENT(Samp)
+ELEMENT(Small)
+ELEMENT(Span)
+ELEMENT(Strong)
+ELEMENT(Sub)
+ELEMENT(Sup)
+ELEMENT(Time)
+ELEMENT(U)
+ELEMENT(Var)
+ELEMENT(Wbr)
+ELEMENT(Area)
+ELEMENT(Audio)
+ELEMENT(Img)
+ELEMENT(Map)
+ELEMENT(Track)
+ELEMENT(Video)
+ELEMENT(Embed)
+ELEMENT(Iframe)
+ELEMENT(Object)
+ELEMENT(Param)
+ELEMENT(Picture)
+ELEMENT(Portal)
+ELEMENT(Source)
+ELEMENT(Svg)
+ELEMENT(Math)
+ELEMENT(Noscript)
+ELEMENT(Script)
+ELEMENT(Del)
+ELEMENT(Ins)
+ELEMENT(Caption)
+ELEMENT(Col)
+ELEMENT(Colgroup)
+ELEMENT(Table)
+ELEMENT(Tbody)
+ELEMENT(Td)
+ELEMENT(Tfoot)
+ELEMENT(Th)
+ELEMENT(Thead)
+ELEMENT(Tr)
+ELEMENT(Button)
+ELEMENT(Datalist)
+ELEMENT(Fieldset)
+ELEMENT(Form)
+ELEMENT(Input)
+ELEMENT(Label)
+ELEMENT(Legend)
+ELEMENT(Meter)
+ELEMENT(Optgroup)
+ELEMENT(Option)
+ELEMENT(Output)
+ELEMENT(Progress)
+ELEMENT(Select)
+ELEMENT(Textarea)
+ELEMENT(Details)
+ELEMENT(Dialog)
+ELEMENT(Menu)
+ELEMENT(Summary)
+ELEMENT(Slot)
+ELEMENT(Template)
 
 } // namespace livid
-
-#endif

@@ -7,36 +7,26 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void increment(emscripten::val) {
+    static void increment(Event) {
         counter++;
         update();
     }
 
-    static void decrement(emscripten::val) {
+    static void decrement(Event) {
         counter--;
         update();
     }
 
     static void update() {
-        Widget::from_id("result").text(
-            std::to_string(counter)
-        );
+        HTMLElement::from_id("result").text(std::to_string(counter));
     }
 
     static void view() {
         Div()
-            .append(Button().text("+").handle(
-                Event::Click, increment
-            ))
-            .append(Button().text("-").handle(
-                Event::Click, decrement
-            ))
-            .append(Div().id("result").text(
-                std::to_string(counter)
-            ));
+            .append(Button().text("+").handle(EventType::Click, increment))
+            .append(Button().text("-").handle(EventType::Click, decrement))
+            .append(Div().id("result").text(std::to_string(counter)));
     }
 };
 
-int main() {
-    AppState::view();
-}
+int main() { AppState::view(); }

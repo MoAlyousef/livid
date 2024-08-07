@@ -4,13 +4,12 @@
 
 using namespace livid;
 
-Widget
-create_table(const std::vector<std::vector<int>> &data) {
+HTMLElement create_table(const std::vector<std::vector<int>> &data) {
     auto t = Table();
     t.attr("border", "1");
     auto tb = Tbody();
     t.append(tb);
-    for (int i = 0; i < data.size(); i++) {
+    for (const auto &i : data) {
         auto tr = Tr();
         tb.append(tr);
 

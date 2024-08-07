@@ -4,16 +4,15 @@
 using namespace livid;
 
 int main() {
-    Widget svg(WidgetType::Svg
-    ); // or NSWidget
-       // svg("http://www.w3.org/2000/svg", "svg");
+    auto svg = Svg(); // or NSHTMLElement
+                      // svg("http://www.w3.org/2000/svg", "svg");
     svg.attr("viewBox", "0 0 300 300");
     svg.attr("width", "300");
     svg.attr("height", "300");
     svg.style(Style::Display, "block");
 
-    // NSWidget is a namespaced widget
-    Widget circle("http://www.w3.org/2000/svg", "circle");
+    // NSHTMLElement is a namespaced HTMLElement
+    auto circle = HTMLElement("http://www.w3.org/2000/svg", "circle");
     circle.attr("cx", "50");
     circle.attr("cy", "50");
     circle.attr("r", "40");
@@ -36,7 +35,7 @@ int main() {
     .attr("width", "300")
     .attr("height", "300")
     .style(Style::Display, "block")
-    .append(Widget("http://www.w3.org/2000/svg", "circle")
+    .append(HTMLElement("http://www.w3.org/2000/svg", "circle")
                 .attr("cx", "50")
                 .attr("cy", "50")
                 .attr("r", "40")

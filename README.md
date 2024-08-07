@@ -17,33 +17,34 @@ int main() {
     // This sets the document title
     Document::title("Hello");
 
-    Widget div(WidgetType::Div);
+    auto div = Div();
 
-    Widget result(WidgetType::Div);
-    // We set the id to conveniently access the widget by id in the callback
+    auto result = Div();
+    // We set the id to conveniently access the HTMLElement by id
+    // in the callback
     result.id("result");
     result.text("0");
     result.style(Style::FontSize, "22px");
 
-    Widget btn1(WidgetType::Button);
+    auto btn1 = Button();
     // This sets the textContent element property
     btn1.text("Increment!");
     // We set the style color to green
     btn1.style(Style::Color, "green");
     // This signals that clicks call the inc function
-    btn1.handle(Event::Click, [=](auto) mutable {
+    btn1.handle(EventType::Click, [=](auto) mutable {
         COUNT += 1;
         Console::log("%d", COUNT);
         result.text(std::to_string(COUNT));
     });
-    // widgets are automatically appended to body, here we want to append to the
-    // div
+    // HTMLElements are automatically appended to body, here we
+    // want to append to the div
     div.append(btn1);
 
-    Widget btn2(WidgetType::Button);
+    auto btn2 = Button();
     btn2.text("Decrement!");
     btn2.style(Style::Color, "red");
-    btn2.handle(Event::Click, [=](auto) mutable {
+    btn2.handle(EventType::Click, [=](auto) mutable {
         COUNT -= 1;
         Console::log("%d", COUNT);
         result.text(std::to_string(COUNT));
@@ -109,24 +110,24 @@ class AppState {
     static inline int counter = 0;
 
   public:
-    static void increment(emscripten::val) {
+    static void increment(Event) {
         counter++;
         update();
     }
 
-    static void decrement(emscripten::val) {
+    static void decrement(Event) {
         counter--;
         update();
     }
 
     static void update() {
-        Widget::from_id("result").text(std::to_string(counter));
+        HTMLElement::from_id("result").text(std::to_string(counter));
     }
 
     static void view() {
         Div()
-            .append(Button().text("+").handle(Event::Click, increment))
-            .append(Button().text("-").handle(Event::Click, decrement))
+            .append(Button().text("+").handle(EventType::Click, increment))
+            .append(Button().text("-").handle(EventType::Click, decrement))
             .append(Div().id("result").text(std::to_string(counter)));
     }
 };
@@ -135,13 +136,14 @@ int main() {
     AppState::view();
 }
 ```
+
 ## Building
 
 Assuming you have a working installation of Emscripten:
 
 If you clone this repo, from the root you can directly invoke em++ to build any of the examples:
 ```
-$ em++ -s WASM=1 --bind -std=c++17 -O3 -Iinclude examples/counter.cpp -o index.html --shell-file my_shell.html
+$ em++ -s WASM=1 --bind -std=c++20 -O3 -Iinclude examples/counter.cpp -o index.html --shell-file my_shell.html
 ```
 
 With CMake:
@@ -149,8 +151,6 @@ You need a CMakeLists.txt file with contents similar to:
 ```cmake
 cmake_minimum_required(VERSION 3.15)
 project(cmake_livid_example)
-
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-s WASM=1 --bind")
 
 include(FetchContent)
 FetchContent_Declare(
@@ -162,7 +162,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(LIVID)
 
 add_executable(index main.cpp)
-target_compile_features(index PRIVATE cxx_std_17)
+target_compile_features(index PRIVATE cxx_std_20)
 set_target_properties(index PROPERTIES SUFFIX .html LINK_FLAGS "-s WASM=1 --bind --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
 target_link_libraries(index PRIVATE livid::livid)
 ```

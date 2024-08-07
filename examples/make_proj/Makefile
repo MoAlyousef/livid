@@ -1,5 +1,5 @@
 
-CXX = em++ -std=c++17 -O3
+CXX = em++ -std=c++20 -O3
 BIN_DIR = bin
 EXE = $(BIN_DIR)/index.html
 LIVID_DIR = ../..
