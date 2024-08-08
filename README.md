@@ -301,6 +301,15 @@ To use your set_title() and draw_on_canvas() function from the javascript side:
 Notice how we create a new variable under window called `my_set_title`, we assign our exported function `set_title` (notice the prefixed _). Then in the button's onclick we call `my_set_title` since it was made global by attaching it to the window.
 Also note that draw_on_canvas() is called during the window's onload event.
 
+## Getting clangd to offer autocompletion hints
+If you're used to enabling CMAKE_EXPORT_COMPILE_COMMANDS with CMake, Using the emscripten sdk with CMake generates .rsp (response files), which can cause issues with clangd. The .rsp file also doesn't list the sysroot includes for clangd to find the necessary headers.
+This can be worked around by creating a .clangd file in your project directory:
+```yaml
+CompileFlags:
+  Add: [-xc++, -Iinclude, -std=c++20, --target=wasm32-unknown-emscripten, --sysroot=path/to/emsdk/upstream/emscripten/cache/sysroot]
+```
+Note that this requires you to pass the absolute path of the emscripten sysroot (no path expanders like ~, .., $HOME or $EMSDK won't work). The above uses `-Iinclude` but you'll want to point that to where livid is installed.
+
 ## Documentation
 
 Still a work in progress, you can generate it using `doxygen livid.dox`.
