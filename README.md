@@ -59,6 +59,33 @@ int main() {
     }
 }
 ```
+
+An alternate way of handling events is to use emscripten's html5 machinery:
+```cpp
+#include <emscripten/html5.h> // necessary header
+
+int main() {
+    // some code
+    auto btn1 = Button().id("btn1");
+    emscripten_set_click_callback(
+        // id
+        "#btn1",
+        // user_data: void *
+        nullptr,
+        // use captures: EM_BOOL
+        0,
+        // callback: (int eventtype, const EmscriptenMouseEvent *me, void *user_data) -> EM_BOOL
+        [](int, const auto *mouseevent, void *) -> auto { 
+            COUNT += 1;
+            Console::log("%d", COUNT);
+            auto result = HTMLElement::from_id("result");
+            result.text(std::to_string(COUNT));
+            return 1;
+        }
+    );
+    // other code
+}
+```
 You can also use a builder pattern:
 ```cpp
 #include "livid/livid.hpp"

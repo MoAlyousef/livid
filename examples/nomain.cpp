@@ -2,15 +2,13 @@
 
 using namespace livid;
 
-__attribute__((used))
-extern "C" void set_title() {
+__attribute__((used)) extern "C" void set_title() {
     // This sets the document title
     Document::title("Hello");
 }
 
-__attribute__((used))
-extern "C" void draw_on_canvas() {
-    auto canvas       = Canvas(HTMLElement::from_id("mycanvas"));
+__attribute__((used)) extern "C" void draw_on_canvas() {
+    auto canvas       = (Canvas)HTMLElement::from_id("mycanvas");
     auto ctx          = canvas.get_context("2d");
     const auto width  = canvas.width();
     const auto height = canvas.height();

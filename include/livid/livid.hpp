@@ -1146,7 +1146,7 @@ class Console final {
 class Canvas : public HTMLElement {
   public:
     Canvas() : HTMLElement(HTMLElementType::Canvas) {}
-    Canvas(HTMLElement elem) : HTMLElement(elem) {}
+    explicit Canvas(HTMLElement elem) : HTMLElement(elem) {}
     Canvas(int w, int h) : HTMLElement(HTMLElementType::Canvas) {
         width(w);
         height(h);
@@ -1165,7 +1165,7 @@ class Canvas : public HTMLElement {
     class E : public HTMLElement {                                             \
       public:                                                                  \
         E() : HTMLElement(HTMLElementType::E) {}                               \
-        E(HTMLElement elem) : HTMLElement(elem) {}                             \
+        explicit E(HTMLElement elem) : HTMLElement(elem) {}                    \
     };
 // NOLINTEND
 
